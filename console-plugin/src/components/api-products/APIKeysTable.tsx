@@ -11,7 +11,10 @@ import {
   Tooltip,
   Flex,
   FlexItem,
+  ClipboardCopy,
+  ClipboardCopyVariant,
 } from '@patternfly/react-core';
+import { EyeIcon, EyeSlashIcon } from '@patternfly/react-icons';
 import { Table, Thead, Tr, Th, Tbody, Td } from '@patternfly/react-table';
 import {
   useK8sWatchResource,
@@ -87,6 +90,33 @@ const APIKeysTable: React.FC<APIKeysTableProps> = ({
       .catch(() => undefined);
   }, []);
 
+  const [revealedKeys, setRevealedKeys] = React.useState<Record<string, string>>({});
+  const [revealLoading, setRevealLoading] = React.useState<Record<string, boolean>>({});
+
+  const handleRevealKey = async (key: APIKey) => {
+    const uid = key.metadata?.uid || '';
+    const secretName = key.spec.secretRef?.name;
+    const ns = key.metadata?.namespace || '';
+    if (!secretName) return;
+    if (revealedKeys[uid]) {
+      setRevealedKeys((prev) => { const next = { ...prev }; delete next[uid]; return next; });
+      return;
+    }
+    setRevealLoading((prev) => ({ ...prev, [uid]: true }));
+    try {
+      const secret = await consoleFetchJSON(
+        `/api/kubernetes/api/v1/namespaces/${ns}/secrets/${secretName}`,
+      );
+      const raw = secret?.data?.api_key;
+      const decoded = raw ? atob(raw) : '(empty)';
+      setRevealedKeys((prev) => ({ ...prev, [uid]: decoded }));
+    } catch {
+      setRevealedKeys((prev) => ({ ...prev, [uid]: '(unable to read secret)' }));
+    } finally {
+      setRevealLoading((prev) => { const next = { ...prev }; delete next[uid]; return next; });
+    }
+  };
+
   const filteredKeys = React.useMemo(
     () =>
       (apiKeys || []).filter(
@@ -156,6 +186,7 @@ const APIKeysTable: React.FC<APIKeysTableProps> = ({
                 <Th>{t('Requester')}</Th>
                 <Th>{t('Plan')}</Th>
                 <Th>{t('Phase')}</Th>
+                <Th>{t('API Key')}</Th>
                 <Th>{t('Created')}</Th>
                 {approvalMode === 'manual' && <Th>{t('Actions')}</Th>}
               </Tr>
@@ -173,6 +204,38 @@ const APIKeysTable: React.FC<APIKeysTableProps> = ({
                       <Label color={PHASE_COLORS[phase] || 'grey'}>
                         {t(phase)}
                       </Label>
+                    </Td>
+                    <Td>
+                      {phase === 'Approved' && key.spec.secretRef?.name ? (
+                        revealedKeys[key.metadata?.uid || ''] ? (
+                          <Flex spaceItems={{ default: 'spaceItemsSm' }} alignItems={{ default: 'alignItemsCenter' }}>
+                            <FlexItem flex={{ default: 'flex_1' }}>
+                              <ClipboardCopy isReadOnly variant={ClipboardCopyVariant.expansion} isCode>
+                                {revealedKeys[key.metadata?.uid || '']}
+                              </ClipboardCopy>
+                            </FlexItem>
+                            <FlexItem>
+                              <Button variant="plain" size="sm" onClick={() => handleRevealKey(key)} aria-label={t('Hide key')}>
+                                <EyeSlashIcon />
+                              </Button>
+                            </FlexItem>
+                          </Flex>
+                        ) : (
+                          <Button
+                            variant="link"
+                            size="sm"
+                            isLoading={revealLoading[key.metadata?.uid || '']}
+                            onClick={() => handleRevealKey(key)}
+                            icon={<EyeIcon />}
+                          >
+                            {t('Reveal Key')}
+                          </Button>
+                        )
+                      ) : (
+                        <span style={{ color: 'var(--pf-t--global--color--nonstatus--gray--default)', fontSize: 12 }}>
+                          {phase === 'Pending' ? t('Pending approval') : '-'}
+                        </span>
+                      )}
                     </Td>
                     <Td>{key.metadata?.creationTimestamp || '-'}</Td>
                     {approvalMode === 'manual' && (
