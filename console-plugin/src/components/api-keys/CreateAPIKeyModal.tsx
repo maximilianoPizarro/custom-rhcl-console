@@ -160,6 +160,7 @@ const CreateAPIKeyModal: React.FC<Props> = ({
             name: secretName,
             namespace: ns,
             labels: {
+              app: productName,
               'app.kubernetes.io/managed-by': 'kuadrant-console',
               'kuadrant.io/apikey': 'true',
               'authorino.kuadrant.io/managed-by': 'authorino',
