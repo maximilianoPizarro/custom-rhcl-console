@@ -3,8 +3,9 @@
 #   https://maximilianoPizarro.github.io/custom-rhcl-console/
 # After registration, Artifact Hub shows a repositoryID — paste it below
 # to claim ownership (optional but recommended).
-#
-# repositoryID: "<uuid-from-artifact-hub>"
+repositoryID: "97a8bbae-1a5e-4ad5-b4f8-0dd4fecff4f4"
 owners:
   - name: Maximiliano Pizarro
     email: maximiliano.pizarro.5@gmail.com
+  - name: Rodrigo Ramalho
+    email: hodrigohamalho@gmail.com

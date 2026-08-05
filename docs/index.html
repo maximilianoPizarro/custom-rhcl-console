@@ -3,463 +3,404 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>custom-rhcl-console — Connectivity Link Console Plugin</title>
-  <meta name="description" content="OpenShift Console dynamic plugin for Red Hat Connectivity Link (Kuadrant). Gateways, HTTPRoutes, policies, DNS/TLS health, API Products — with Helm chart for OpenShift.">
+  <title>Kuadrant Console — OpenShift plugin for Connectivity Link</title>
+  <meta name="description" content="OpenShift Console dynamic plugin for Red Hat Connectivity Link (Kuadrant). Operational views for Gateways, HTTPRoutes, policies, DNS/TLS, and API Products.">
+  <link rel="icon" type="image/svg+xml" href="assets/logo.svg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Red+Hat+Display:wght@400;600;700&family=Red+Hat+Text:wght@400;500;600&family=Red+Hat+Mono&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Red+Hat+Display:wght@500;700&family=Red+Hat+Text:wght@400;500;600&family=Red+Hat+Mono&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@patternfly/patternfly@6.6.1/patternfly.min.css">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@patternfly/patternfly@6.6.1/patternfly-addons.css">
   <style>
     :root {
-      --rh-red: #ee0000;
-      --rh-red-dark: #cc0000;
-      --rh-black: #151515;
-      --rh-gray-100: #f0f0f0;
-      --rh-gray-300: #d2d2d2;
-      --rh-gray-500: #6a6e73;
-      --rh-blue: #06c;
-      --rh-font-display: "Red Hat Display", "RedHatDisplay", Overpass, overpass, helvetica, arial, sans-serif;
-      --rh-font-text: "Red Hat Text", "RedHatText", Overpass, overpass, helvetica, arial, sans-serif;
-      --rh-font-mono: "Red Hat Mono", "RedHatMono", "Liberation Mono", consolas, "SFMono-Regular", menlo, monaco, "Courier New", monospace;
+      --ink: #1b1d21;
+      --muted: #4f5255;
+      --line: #c7c7c7;
+      --paper: #f5f8fb;
+      --panel: #ffffff;
+      --sky: #e8f4fc;
+      --navy: #0a2f5c;
+      --signal: #2b9af3;
+      --accent: #ee0000;
+      --ok: #3e8635;
+      --display: "Red Hat Display", "RedHatDisplay", Overpass, sans-serif;
+      --text: "Red Hat Text", "RedHatText", Overpass, sans-serif;
+      --mono: "Red Hat Mono", "RedHatMono", ui-monospace, monospace;
     }
+    * { box-sizing: border-box; }
     html { scroll-behavior: smooth; }
     body {
-      font-family: var(--rh-font-text);
-      color: var(--rh-black);
-      background: #fff;
       margin: 0;
-      line-height: 1.6;
+      font-family: var(--text);
+      color: var(--ink);
+      background:
+        radial-gradient(1200px 500px at 100% -10%, #d6ebf9 0%, transparent 55%),
+        radial-gradient(900px 420px at -10% 20%, #f0f4f8 0%, transparent 50%),
+        var(--paper);
+      line-height: 1.55;
     }
-    h1, h2, h3, .pf-v6-c-title {
-      font-family: var(--rh-font-display);
-    }
-    a { color: var(--rh-blue); }
-    a:hover { text-decoration: underline; }
+    h1, h2, h3 { font-family: var(--display); letter-spacing: -0.02em; }
+    a { color: var(--navy); }
+    a:hover { color: var(--signal); }
 
-    .topnav {
-      position: sticky; top: 0; z-index: 200;
-      background: var(--rh-black);
-      border-bottom: 2px solid var(--rh-red);
-    }
-    .topnav-inner {
-      max-width: 1140px; margin: 0 auto;
-      display: flex; align-items: center; gap: 8px;
-      padding: 0 24px; overflow-x: auto;
-    }
-    .topnav-brand {
-      color: #fff; text-decoration: none;
-      font-family: var(--rh-font-display); font-weight: 600;
-      white-space: nowrap; margin-right: 16px; padding: 14px 0;
-    }
-    .topnav-brand:hover { text-decoration: none; color: #fff; }
-    .topnav-brand span { color: var(--rh-red); }
-    .topnav-links { display: flex; }
-    .topnav-links a {
-      color: #a0a0a0; text-decoration: none;
-      padding: 14px 12px; font-size: 0.85rem; font-weight: 500;
-      white-space: nowrap; border-bottom: 2px solid transparent;
-    }
-    .topnav-links a:hover { color: #fff; text-decoration: none; }
-    .topnav-links a:focus { outline: none; color: #fff; border-bottom-color: var(--rh-red); }
+    .shell { max-width: 1120px; margin: 0 auto; padding: 0 24px; }
 
+    /* Light masthead — PatternFly-inspired, not ApiShift black bar */
+    .masthead {
+      position: sticky; top: 0; z-index: 50;
+      backdrop-filter: blur(10px);
+      background: rgba(245, 248, 251, 0.92);
+      border-bottom: 1px solid var(--line);
+    }
+    .masthead-inner {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 16px; min-height: 64px;
+    }
+    .brand {
+      display: flex; align-items: center; gap: 12px;
+      text-decoration: none; color: var(--ink); font-family: var(--display); font-weight: 700;
+    }
+    .brand img { width: 36px; height: 36px; }
+    .brand small { display: block; font-family: var(--text); font-weight: 500; color: var(--muted); font-size: 0.75rem; }
+    .nav { display: flex; flex-wrap: wrap; gap: 4px; }
+    .nav a {
+      text-decoration: none; color: var(--muted);
+      padding: 8px 12px; border-radius: 999px; font-size: 0.9rem; font-weight: 500;
+    }
+    .nav a:hover { background: #fff; color: var(--navy); }
+
+    /* Split hero */
     .hero {
-      background: var(--rh-black);
-      color: #fff;
-      padding: 72px 24px 64px;
-      text-align: center;
+      padding: 56px 0 40px;
+      display: grid;
+      grid-template-columns: 1.2fr 0.8fr;
+      gap: 40px;
+      align-items: center;
     }
-    .hero .version-tag {
-      display: inline-block;
-      background: #3f9c35; color: #fff;
-      padding: 4px 16px; border-radius: 999px;
-      font-size: 0.85rem; font-weight: 700; margin-bottom: 16px;
+    @media (max-width: 860px) {
+      .hero { grid-template-columns: 1fr; padding-top: 36px; }
+      .hero-visual { order: -1; justify-self: center; }
+    }
+    .pill {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: #fff; border: 1px solid var(--line);
+      border-radius: 999px; padding: 4px 12px 4px 4px;
+      font-size: 0.8rem; font-weight: 600; color: var(--navy); margin-bottom: 16px;
+    }
+    .pill b {
+      background: var(--navy); color: #fff;
+      border-radius: 999px; padding: 2px 10px; font-size: 0.75rem;
     }
     .hero h1 {
-      font-size: clamp(1.75rem, 4vw, 2.6rem);
-      font-weight: 700; margin: 0 0 12px;
+      font-size: clamp(2rem, 4vw, 3rem);
+      line-height: 1.1; margin: 0 0 16px; max-width: 14ch;
     }
-    .hero-tagline {
-      font-size: 1.2rem; color: #e0e0e0;
-      max-width: 720px; margin: 0 auto 28px; line-height: 1.5;
+    .hero h1 em { font-style: normal; color: var(--signal); }
+    .hero-lead {
+      font-size: 1.1rem; color: var(--muted); max-width: 38rem; margin: 0 0 28px;
     }
-    .hero-flow {
-      display: flex; align-items: center; justify-content: center;
-      gap: 12px; flex-wrap: wrap; margin: 0 auto 28px;
+    .cta-row { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 20px; }
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center;
+      padding: 12px 20px; border-radius: 8px; font-weight: 600;
+      text-decoration: none; font-size: 0.95rem; border: 1px solid transparent;
     }
-    .hero-flow-block {
-      background: rgba(255,255,255,0.1);
-      border: 1px solid rgba(255,255,255,0.25);
-      padding: 10px 20px; border-radius: 8px;
-      font-weight: 600; font-size: 0.95rem;
+    .btn-primary { background: var(--navy); color: #fff; }
+    .btn-primary:hover { background: #072444; color: #fff; text-decoration: none; }
+    .btn-ghost { background: #fff; border-color: var(--line); color: var(--ink); }
+    .btn-ghost:hover { border-color: var(--signal); color: var(--navy); text-decoration: none; }
+    .note {
+      display: flex; gap: 10px; align-items: flex-start;
+      background: #fff8f0; border: 1px solid #f0c7a0;
+      border-radius: 10px; padding: 12px 14px; font-size: 0.88rem; color: #5c3b16;
+      max-width: 40rem;
     }
-    .hero-flow-accent { background: var(--rh-red); border-color: var(--rh-red); }
-    .hero-flow-arrow { color: #6a6e73; font-size: 1.3rem; }
-    .hero-ctas { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-bottom: 24px; }
-    .hero-btn {
-      display: inline-block; padding: 12px 28px; border-radius: 6px;
-      font-weight: 600; font-size: 0.95rem; text-decoration: none;
-    }
-    .hero-btn-primary { background: var(--rh-red); color: #fff; }
-    .hero-btn-primary:hover { background: var(--rh-red-dark); text-decoration: none; color: #fff; }
-    .hero-btn-secondary {
-      background: transparent; color: #fff;
-      border: 1px solid rgba(255,255,255,0.4);
-    }
-    .hero-btn-secondary:hover { background: rgba(255,255,255,0.1); text-decoration: none; color: #fff; }
-
-    .experimental-banner {
-      display: flex; align-items: center; gap: 12px; justify-content: center;
-      background: rgba(238, 0, 0, 0.15);
-      border: 1px solid rgba(238, 0, 0, 0.4);
-      border-radius: 8px; padding: 12px 24px;
-      margin: 0 auto; max-width: 720px;
-      font-size: 0.95rem; color: #ffcccc; text-align: left;
-    }
-    .exp-badge {
-      background: var(--rh-red); color: #fff;
-      padding: 3px 12px; border-radius: 999px;
-      font-size: 0.75rem; font-weight: 700; letter-spacing: 0.05em;
-      white-space: nowrap;
+    .note strong {
+      display: inline-block; background: #c58c4a; color: #fff;
+      border-radius: 4px; padding: 1px 8px; font-size: 0.7rem;
+      letter-spacing: 0.04em; margin-right: 6px;
     }
 
-    .container { max-width: 1140px; margin: 0 auto; padding: 0 24px; }
-    .section { padding: 56px 0; }
-    .section h2 {
-      font-size: 1.75rem; font-weight: 700; margin: 0 0 8px;
+    .hero-visual {
+      width: min(320px, 100%);
+      background: linear-gradient(160deg, #fff 0%, var(--sky) 100%);
+      border: 1px solid #b8d4ea;
+      border-radius: 28px;
+      padding: 36px;
+      box-shadow: 0 24px 48px rgba(10, 47, 92, 0.12);
     }
-    .section-lead { color: var(--rh-gray-500); margin: 0 0 28px; max-width: 720px; }
+    .hero-visual img { width: 100%; height: auto; display: block; }
 
-    .card-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-      gap: 24px;
+    /* Capability rail — horizontal numbered list, not ApiShift card grid with red titles */
+    .section { padding: 48px 0; }
+    .section-head {
+      display: flex; flex-wrap: wrap; justify-content: space-between;
+      gap: 12px; align-items: end; margin-bottom: 28px;
     }
-    .cap-card {
-      background: #fff;
-      border: 1px solid var(--rh-gray-300);
-      border-radius: 8px;
+    .section-head h2 { margin: 0; font-size: 1.7rem; }
+    .section-head p { margin: 0; color: var(--muted); max-width: 34rem; }
+
+    .rail {
+      display: grid; gap: 1px; background: var(--line);
+      border: 1px solid var(--line); border-radius: 16px; overflow: hidden;
+    }
+    .rail-item {
+      display: grid; grid-template-columns: 72px 1fr;
+      gap: 8px; background: var(--panel); padding: 20px 22px;
+    }
+    .rail-item .num {
+      font-family: var(--display); font-size: 1.5rem; font-weight: 700;
+      color: var(--signal); line-height: 1;
+    }
+    .rail-item h3 { margin: 0 0 4px; font-size: 1.05rem; }
+    .rail-item p { margin: 0; color: var(--muted); font-size: 0.95rem; }
+    @media (min-width: 800px) {
+      .rail { grid-template-columns: 1fr 1fr; }
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 16px;
       padding: 24px;
-      transition: box-shadow 0.2s;
     }
-    .cap-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.1); }
-    .cap-card .eyebrow {
-      font-size: 0.75rem; font-weight: 700; letter-spacing: 0.04em;
-      text-transform: uppercase; color: var(--rh-red); margin-bottom: 8px;
+    .code {
+      background: #12263a; color: #d7e6f5;
+      border-radius: 12px; padding: 18px 20px;
+      font-family: var(--mono); font-size: 0.86rem;
+      overflow-x: auto; margin: 12px 0 0;
     }
-    .cap-card h3 { font-size: 1.15rem; margin: 0 0 8px; }
-    .cap-card p { color: var(--rh-gray-500); font-size: 0.95rem; margin: 0; }
+    .code .c { color: #7eb87e; }
+    .code .k { color: #7ec8ff; }
 
-    .install-block {
-      background: #1e1e1e; color: #d4d4d4;
-      padding: 20px 24px; border-radius: 8px;
-      font-family: var(--rh-font-mono); font-size: 0.9rem;
-      overflow-x: auto; margin: 16px 0;
-      border: 1px solid #333;
+    table.matrix {
+      width: 100%; border-collapse: collapse; font-size: 0.92rem;
     }
-    .install-block .comment { color: #6a9955; }
-    .install-block .cmd { color: #dcdcaa; }
+    table.matrix th, table.matrix td {
+      text-align: left; padding: 12px 14px;
+      border-bottom: 1px solid var(--line);
+    }
+    table.matrix th {
+      background: var(--sky); font-family: var(--display); font-weight: 700;
+    }
+    table.matrix tr:last-child td { border-bottom: none; }
 
-    .arch-table {
-      width: 100%; border-collapse: collapse; margin: 16px 0;
-    }
-    .arch-table th, .arch-table td {
-      padding: 12px 16px; text-align: left;
-      border-bottom: 1px solid var(--rh-gray-300);
-      font-size: 0.9rem;
-    }
-    .arch-table th {
-      background: var(--rh-gray-100);
-      font-weight: 600; font-family: var(--rh-font-display);
-    }
-
-    .screenshot-grid {
+    .shots {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-      gap: 24px;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 16px;
     }
-    .screenshot {
-      border: 1px solid var(--rh-gray-300);
-      border-radius: 8px; overflow: hidden; background: #fff;
-      cursor: zoom-in; text-decoration: none; color: inherit;
-      display: block;
+    .shot {
+      display: block; text-decoration: none; color: inherit;
+      background: #fff; border: 1px solid var(--line); border-radius: 14px;
+      overflow: hidden; transition: transform 0.15s, box-shadow 0.15s;
     }
-    .screenshot:hover { text-decoration: none; box-shadow: 0 4px 16px rgba(0,0,0,0.1); }
-    .screenshot img { width: 100%; display: block; aspect-ratio: 16/10; object-fit: cover; object-position: top; }
-    .screenshot h4 {
-      margin: 0; padding: 12px 16px; font-size: 0.95rem;
-      font-family: var(--rh-font-display);
+    .shot:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 28px rgba(10, 47, 92, 0.12);
+      text-decoration: none; color: inherit;
+    }
+    .shot img {
+      width: 100%; aspect-ratio: 16/10; object-fit: cover; object-position: top;
+      display: block; background: #eef2f6;
+    }
+    .shot span {
+      display: block; padding: 12px 14px; font-family: var(--display);
+      font-weight: 600; font-size: 0.92rem;
     }
 
-    .site-footer {
-      background: var(--rh-black); color: #c9c9c9;
-      padding: 40px 0; margin-top: 24px;
+    .two-col {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 20px;
     }
-    .site-footer .links { display: flex; flex-wrap: wrap; gap: 16px; margin-bottom: 16px; }
-    .site-footer .links a { color: #73bcf7; font-size: 0.9rem; }
-    .site-footer .copy { font-size: 0.8rem; color: #6a6e73; }
+    @media (max-width: 760px) { .two-col { grid-template-columns: 1fr; } }
+
+    .footer {
+      margin-top: 40px; padding: 36px 0 48px;
+      border-top: 1px solid var(--line);
+      color: var(--muted); font-size: 0.88rem;
+    }
+    .footer-links { display: flex; flex-wrap: wrap; gap: 14px; margin-bottom: 12px; }
+    .footer-links a { color: var(--navy); font-weight: 500; }
 
     .lightbox {
       display: none; position: fixed; inset: 0; z-index: 1000;
-      background: rgba(0,0,0,0.85); align-items: center; justify-content: center;
-      padding: 24px; cursor: zoom-out;
+      background: rgba(10, 20, 35, 0.88);
+      align-items: center; justify-content: center; padding: 24px; cursor: zoom-out;
     }
     .lightbox.open { display: flex; }
-    .lightbox img {
-      max-width: 96vw; max-height: 90vh;
-      border-radius: 8px; box-shadow: 0 8px 40px rgba(0,0,0,0.5);
-    }
-
-    @media (max-width: 640px) {
-      .experimental-banner { flex-direction: column; text-align: center; }
-      .arch-table { display: block; overflow-x: auto; }
-    }
+    .lightbox img { max-width: 96vw; max-height: 90vh; border-radius: 10px; }
   </style>
 </head>
 <body>
-
-  <nav class="topnav" aria-label="Site">
-    <div class="topnav-inner">
-      <a class="topnav-brand" href="#">custom-<span>rhcl</span>-console</a>
-      <div class="topnav-links">
+  <header class="masthead">
+    <div class="shell masthead-inner">
+      <a class="brand" href="#">
+        <img src="assets/logo.svg" alt="" width="36" height="36">
+        <span>Kuadrant Console<small>custom-rhcl-console</small></span>
+      </a>
+      <nav class="nav" aria-label="Primary">
         <a href="#capabilities">Capabilities</a>
         <a href="#install">Install</a>
         <a href="#architecture">Architecture</a>
         <a href="#screenshots">Screenshots</a>
         <a href="#gitops">GitOps</a>
         <a href="https://github.com/maximilianoPizarro/custom-rhcl-console" target="_blank" rel="noopener">GitHub</a>
-      </div>
-    </div>
-  </nav>
-
-  <header class="hero">
-    <div class="version-tag">v0.1.1</div>
-    <h1>Connectivity Link Console Plugin</h1>
-    <p class="hero-tagline">
-      Operational visibility for Red Hat Connectivity Link (Kuadrant) inside the OpenShift Console —
-      Gateways, HTTPRoutes, policies, DNS/TLS health, traffic, and API Products.
-    </p>
-    <div class="hero-flow" aria-hidden="true">
-      <div class="hero-flow-block">Kuadrant / RHCL</div>
-      <div class="hero-flow-arrow">→</div>
-      <div class="hero-flow-block hero-flow-accent">custom-rhcl-console</div>
-      <div class="hero-flow-arrow">→</div>
-      <div class="hero-flow-block">OpenShift Console</div>
-    </div>
-    <div class="hero-ctas">
-      <a class="hero-btn hero-btn-primary" href="#install">Install with Helm</a>
-      <a class="hero-btn hero-btn-secondary" href="#screenshots">See Screenshots</a>
-      <a class="hero-btn hero-btn-secondary" href="https://github.com/maximilianoPizarro/custom-rhcl-console" target="_blank" rel="noopener">View on GitHub</a>
-    </div>
-    <div class="experimental-banner">
-      <span class="exp-badge">EXPERIMENTAL</span>
-      <span>Independent open-source project — not an official Red Hat product. APIs and UI may change without notice.</span>
+      </nav>
     </div>
   </header>
 
-  <main>
-    <section class="section" id="capabilities">
-      <div class="container">
-        <h2>Core capabilities</h2>
-        <p class="section-lead">
-          A PatternFly 6 OpenShift Console dynamic plugin that surfaces Connectivity Link resources
-          with the logged-in user's RBAC — no service-account token in the browser.
+  <main class="shell">
+    <section class="hero">
+      <div>
+        <div class="pill"><b>v0.1.2</b> Helm chart · OpenShift Console plugin</div>
+        <h1>See your <em>Connectivity Link</em> estate clearly</h1>
+        <p class="hero-lead">
+          A PatternFly OpenShift Console plugin for Red Hat Connectivity Link (Kuadrant).
+          Hostname-first Gateways and HTTPRoutes, policy health, DNS/TLS diagnostics,
+          and API Product views — using the signed-in user’s RBAC.
         </p>
-        <div class="card-grid">
-          <article class="cap-card">
-            <div class="eyebrow">Operations</div>
-            <h3>Gateways &amp; HTTPRoutes</h3>
-            <p>Hostname-first lists, attachment views, backend refs, and effective policy stack after Kuadrant merge/override resolution.</p>
-          </article>
-          <article class="cap-card">
-            <div class="eyebrow">Policies</div>
-            <h3>Auth, Rate Limit, DNS &amp; TLS</h3>
-            <p>Policy inventory and detail pages for AuthPolicy, RateLimitPolicy, TokenRateLimitPolicy, DNSPolicy, and TLSPolicy.</p>
-          </article>
-          <article class="cap-card">
-            <div class="eyebrow">Health</div>
-            <h3>DNS &amp; TLS troubleshooting</h3>
-            <p>Certificate expiry warnings, DNS propagation status, and live probes via the optional dns-prober companion.</p>
-          </article>
-          <article class="cap-card">
-            <div class="eyebrow">API Products</div>
-            <h3>Business-friendly catalog</h3>
-            <p>API Product overview without YAML: plans, API keys with approve/reject flows, and traffic sparklines.</p>
-          </article>
-          <article class="cap-card">
-            <div class="eyebrow">Observability</div>
-            <h3>Traffic &amp; cost</h3>
-            <p>Envoy metrics via in-cluster Prometheus, Grafana/Tempo deeplinks, and cost monitoring for API key tiers.</p>
-          </article>
-          <article class="cap-card">
-            <div class="eyebrow">Packaging</div>
-            <h3>Helm &amp; GitOps ready</h3>
-            <p>Chart on Artifact Hub / GitHub Pages. Deploys plugin, ConsolePlugin CR, ConfigMap, and optional dns-prober.</p>
-          </article>
+        <div class="cta-row">
+          <a class="btn btn-primary" href="#install">Install with Helm</a>
+          <a class="btn btn-ghost" href="#screenshots">Browse screenshots</a>
+          <a class="btn btn-ghost" href="https://github.com/maximilianoPizarro/custom-rhcl-console" target="_blank" rel="noopener">Source</a>
         </div>
+        <div class="note">
+          <div><strong>EXPERIMENTAL</strong>
+            Independent open-source project originally authored by Rodrigo Ramalho.
+            Not an official Red Hat product — APIs and UI may change.
+          </div>
+        </div>
+      </div>
+      <div class="hero-visual" aria-hidden="true">
+        <img src="assets/logo.svg" alt="Kuadrant Console logo">
       </div>
     </section>
 
-    <section class="section" id="install" style="background: #fafafa;">
-      <div class="container">
-        <h2>Install with Helm</h2>
-        <p class="section-lead">
-          Install into the <code>custom-rhcl-console</code> namespace — the plugin hardcodes ConfigMap lookups there.
-          Requires OpenShift 4.19+ and Connectivity Link / Kuadrant.
-        </p>
-        <div class="install-block">
-          <div class="comment"># Add the Helm repository (GitHub Pages)</div>
-          <div><span class="cmd">helm repo add</span> custom-rhcl-console https://maximilianoPizarro.github.io/custom-rhcl-console/</div>
-          <div><span class="cmd">helm repo update</span></div>
+    <section class="section" id="capabilities">
+      <div class="section-head">
+        <h2>What operators get</h2>
+        <p>Focused console surfaces for day-2 Connectivity Link operations — not a generic dashboard collage.</p>
+      </div>
+      <div class="rail">
+        <div class="rail-item"><div class="num">01</div><div><h3>Gateways &amp; HTTPRoutes</h3><p>Hostname-first lists, backend refs, and the effective policy stack after Kuadrant merge/override.</p></div></div>
+        <div class="rail-item"><div class="num">02</div><div><h3>Policy inventory</h3><p>Auth, rate-limit, token rate-limit, DNS, and TLS policies with attachment context.</p></div></div>
+        <div class="rail-item"><div class="num">03</div><div><h3>DNS &amp; TLS diagnostics</h3><p>Certificate windows, propagation status, and live probes via the optional dns-prober companion.</p></div></div>
+        <div class="rail-item"><div class="num">04</div><div><h3>API Products &amp; cost</h3><p>Business-friendly product pages, API key flows, traffic sparklines, and tier cost views.</p></div></div>
+        <div class="rail-item"><div class="num">05</div><div><h3>Observability deeplinks</h3><p>Grafana and Tempo routes resolved from a runtime ConfigMap — disabled with a tooltip when missing.</p></div></div>
+        <div class="rail-item"><div class="num">06</div><div><h3>Helm + GitOps packaging</h3><p>Chart on this Pages site for Artifact Hub; Argo CD-ready path under <code>helm/custom-rhcl-console</code>.</p></div></div>
+      </div>
+    </section>
+
+    <section class="section" id="install">
+      <div class="section-head">
+        <h2>Install</h2>
+        <p>Target namespace must be <code>custom-rhcl-console</code> — the plugin hardcodes ConfigMap lookups there.</p>
+      </div>
+      <div class="panel">
+        <p style="margin:0 0 8px;color:var(--muted);">From the published Helm repository</p>
+        <div class="code">
+          <div class="c"># Add repo (GitHub Pages /docs)</div>
+          <div><span class="k">helm repo add</span> custom-rhcl-console https://maximilianoPizarro.github.io/custom-rhcl-console/</div>
+          <div><span class="k">helm repo update</span></div>
           <br>
-          <div class="comment"># Install the plugin (+ dns-prober by default)</div>
-          <div><span class="cmd">helm install</span> custom-rhcl-console custom-rhcl-console/custom-rhcl-console \</div>
+          <div><span class="k">helm install</span> custom-rhcl-console custom-rhcl-console/custom-rhcl-console \</div>
           <div>&nbsp;&nbsp;-n custom-rhcl-console --create-namespace</div>
         </div>
-        <div class="install-block">
-          <div class="comment"># Or install from the Git repository path (GitOps / local)</div>
-          <div><span class="cmd">helm upgrade --install</span> custom-rhcl-console ./helm/custom-rhcl-console \</div>
+        <p style="margin:20px 0 8px;color:var(--muted);">Or from the Git path (GitOps)</p>
+        <div class="code">
+          <div><span class="k">helm upgrade --install</span> custom-rhcl-console ./helm/custom-rhcl-console \</div>
           <div>&nbsp;&nbsp;-n custom-rhcl-console --create-namespace</div>
         </div>
-        <p>
-          Chart docs:
-          <a href="https://github.com/maximilianoPizarro/custom-rhcl-console/tree/main/helm/custom-rhcl-console">helm/custom-rhcl-console</a>
-          · Images:
-          <code>quay.io/maximilianopizarro/custom-rhcl-console</code>
-        </p>
       </div>
     </section>
 
     <section class="section" id="architecture">
-      <div class="container">
+      <div class="section-head">
         <h2>Architecture</h2>
-        <p class="section-lead">
-          Stateless nginx serving the webpack Module Federation bundle over HTTPS :9001
-          (OpenShift service-CA). Navigation registers via <code>console-extensions.json</code>.
-        </p>
-        <table class="arch-table">
+        <p>Stateless nginx serving Module Federation assets over HTTPS :9001 with OpenShift service-CA.</p>
+      </div>
+      <div class="panel" style="padding:0;overflow:hidden;">
+        <table class="matrix">
           <thead>
-            <tr>
-              <th>Layer</th>
-              <th>Technology</th>
-              <th>Description</th>
-            </tr>
+            <tr><th>Layer</th><th>Stack</th><th>Role</th></tr>
           </thead>
           <tbody>
-            <tr>
-              <td>UI</td>
-              <td>React 18, PatternFly 6, Console SDK</td>
-              <td>Dynamic plugin inside the OpenShift Console iframe</td>
-            </tr>
-            <tr>
-              <td>Runtime</td>
-              <td>UBI9 nginx-124 (HTTPS :9001)</td>
-              <td>Serves static assets; Console requires HTTPS plugin backends</td>
-            </tr>
-            <tr>
-              <td>Registration</td>
-              <td>ConsolePlugin CR</td>
-              <td>Sidebar section + optional dns-prober proxy alias</td>
-            </tr>
-            <tr>
-              <td>Companion</td>
-              <td>Quarkus dns-prober (optional)</td>
-              <td>Live DNS / TLS / security-header probes</td>
-            </tr>
-            <tr>
-              <td>Auth model</td>
-              <td>User bearer token</td>
-              <td>No plugin ServiceAccount — RBAC-aware empty states</td>
-            </tr>
-            <tr>
-              <td>Packaging</td>
-              <td>Helm 3 + Quay.io</td>
-              <td>Chart on this Pages site; CI builds UBI images</td>
-            </tr>
+            <tr><td>UI</td><td>React 18 · PatternFly 6 · Console SDK</td><td>Dynamic plugin in the OpenShift Console</td></tr>
+            <tr><td>Runtime</td><td>UBI9 nginx-124 · HTTPS :9001</td><td>Serves webpack assets to the Console</td></tr>
+            <tr><td>Registration</td><td>ConsolePlugin CR</td><td>Sidebar + optional dns-prober proxy</td></tr>
+            <tr><td>Companion</td><td>Quarkus dns-prober</td><td>Live DNS / TLS / header probes</td></tr>
+            <tr><td>Auth</td><td>User bearer token</td><td>No plugin ServiceAccount — RBAC-aware UX</td></tr>
+            <tr><td>Packaging</td><td>Helm 3 · Quay.io</td><td>Images + chart for Artifact Hub / GitOps</td></tr>
           </tbody>
         </table>
       </div>
     </section>
 
-    <section class="section" id="screenshots" style="background: #fafafa;">
-      <div class="container">
+    <section class="section" id="screenshots">
+      <div class="section-head">
         <h2>Screenshots</h2>
-        <p class="section-lead">Click any image to enlarge.</p>
-        <div class="screenshot-grid">
-          <a class="screenshot" href="images/gateway-detail.png" data-lightbox>
-            <img src="images/gateway-detail.png" alt="Gateway detail page" loading="lazy">
-            <h4>Gateway Detail</h4>
-          </a>
-          <a class="screenshot" href="images/httproute-detail.png" data-lightbox>
-            <img src="images/httproute-detail.png" alt="HTTPRoute detail page" loading="lazy">
-            <h4>HTTPRoute Detail</h4>
-          </a>
-          <a class="screenshot" href="images/httproute-backends.png" data-lightbox>
-            <img src="images/httproute-backends.png" alt="HTTPRoute backends tab" loading="lazy">
-            <h4>HTTPRoute — Backends</h4>
-          </a>
-          <a class="screenshot" href="images/api-product-overview.png" data-lightbox>
-            <img src="images/api-product-overview.png" alt="API Product overview" loading="lazy">
-            <h4>API Product Overview</h4>
-          </a>
-          <a class="screenshot" href="images/cost-monitoring.png" data-lightbox>
-            <img src="images/cost-monitoring.png" alt="Cost monitoring page" loading="lazy">
-            <h4>Cost Monitoring</h4>
-          </a>
-        </div>
+        <p>Click to enlarge.</p>
+      </div>
+      <div class="shots">
+        <a class="shot" href="images/gateway-detail.png" data-lightbox><img src="images/gateway-detail.png" alt="Gateway detail" loading="lazy"><span>Gateway detail</span></a>
+        <a class="shot" href="images/httproute-detail.png" data-lightbox><img src="images/httproute-detail.png" alt="HTTPRoute detail" loading="lazy"><span>HTTPRoute detail</span></a>
+        <a class="shot" href="images/httproute-backends.png" data-lightbox><img src="images/httproute-backends.png" alt="HTTPRoute backends" loading="lazy"><span>HTTPRoute backends</span></a>
+        <a class="shot" href="images/api-product-overview.png" data-lightbox><img src="images/api-product-overview.png" alt="API Product overview" loading="lazy"><span>API Product overview</span></a>
+        <a class="shot" href="images/cost-monitoring.png" data-lightbox><img src="images/cost-monitoring.png" alt="Cost monitoring" loading="lazy"><span>Cost monitoring</span></a>
       </div>
     </section>
 
     <section class="section" id="gitops">
-      <div class="container">
+      <div class="section-head">
         <h2>GitOps</h2>
-        <p class="section-lead">
-          Wire the chart into OpenShift GitOps the same way as migration-toolkit-rhcl —
-          as a <code>helmApps</code> entry pointing at <code>helm/custom-rhcl-console</code>.
-        </p>
-        <div class="install-block">
-          <div class="comment"># from-3scale-to-connectivity-link examples/helm/values.yaml</div>
-          <div>- id: custom-rhcl-console</div>
-          <div>&nbsp;&nbsp;enabled: true</div>
-          <div>&nbsp;&nbsp;repoURL: "https://github.com/maximilianoPizarro/custom-rhcl-console"</div>
-          <div>&nbsp;&nbsp;path: helm/custom-rhcl-console</div>
-          <div>&nbsp;&nbsp;targetRevision: "main"</div>
-          <div>&nbsp;&nbsp;destinationNamespace: custom-rhcl-console</div>
-          <div>&nbsp;&nbsp;syncWave: "10"</div>
+        <p>Same pattern as other workshop helmApps — point Argo CD at the chart path.</p>
+      </div>
+      <div class="two-col">
+        <div class="panel">
+          <div class="code" style="margin:0;">
+            <div class="c"># examples/helm/values.yaml (helmApps)</div>
+            <div>- id: custom-rhcl-console</div>
+            <div>&nbsp;&nbsp;enabled: true</div>
+            <div>&nbsp;&nbsp;repoURL: "https://github.com/maximilianoPizarro/custom-rhcl-console"</div>
+            <div>&nbsp;&nbsp;path: helm/custom-rhcl-console</div>
+            <div>&nbsp;&nbsp;destinationNamespace: custom-rhcl-console</div>
+            <div>&nbsp;&nbsp;syncWave: "10"</div>
+          </div>
         </div>
-        <p>
-          Full snippet:
-          <a href="https://github.com/maximilianoPizarro/custom-rhcl-console/tree/main/examples/gitops">examples/gitops</a>
-          · Design system:
-          <a href="https://www.patternfly.org/" target="_blank" rel="noopener">PatternFly</a>
-          · Brand:
-          <a href="https://ux.redhat.com/" target="_blank" rel="noopener">ux.redhat.com</a>
-        </p>
+        <div class="panel">
+          <h3 style="margin-top:0;">Design references</h3>
+          <p style="color:var(--muted);">UI built with PatternFly 6; brand cues from Red Hat Design System guidance.</p>
+          <p>
+            <a href="https://www.patternfly.org/" target="_blank" rel="noopener">patternfly.org</a>
+            ·
+            <a href="https://ux.redhat.com/" target="_blank" rel="noopener">ux.redhat.com</a>
+            ·
+            <a href="https://github.com/maximilianoPizarro/custom-rhcl-console/tree/main/examples/gitops">examples/gitops</a>
+          </p>
+          <p style="color:var(--muted);margin-bottom:0;">
+            Maintainers: Rodrigo Ramalho (original author), Maximiliano Pizarro.
+          </p>
+        </div>
       </div>
     </section>
   </main>
 
-  <footer class="site-footer">
-    <div class="container">
-      <div class="links">
+  <footer class="footer">
+    <div class="shell">
+      <div class="footer-links">
         <a href="https://github.com/maximilianoPizarro/custom-rhcl-console">GitHub</a>
         <a href="https://artifacthub.io/">Artifact Hub</a>
-        <a href="https://docs.redhat.com/en/documentation/red_hat_connectivity_link">Connectivity Link docs</a>
-        <a href="https://docs.kuadrant.io/">Kuadrant</a>
-        <a href="https://www.patternfly.org/">PatternFly</a>
-        <a href="https://ux.redhat.com/">Red Hat UX</a>
         <a href="index.yaml">Helm index.yaml</a>
+        <a href="assets/logo.svg">Logo</a>
+        <a href="https://docs.kuadrant.io/">Kuadrant</a>
+        <a href="https://docs.redhat.com/en/documentation/red_hat_connectivity_link">Connectivity Link</a>
       </div>
-      <p class="copy">
-        Apache-2.0 · custom-rhcl-console v0.1.1 · Independent project — not affiliated with Red Hat, Inc. product support.
-      </p>
+      <div>Apache-2.0 · Kuadrant Console (custom-rhcl-console) v0.1.2 · Independent project — not Red Hat product support.</div>
     </div>
   </footer>
 
-  <div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-label="Screenshot preview">
+  <div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-label="Screenshot">
     <img src="" alt="">
   </div>
-
   <script>
     (function () {
       var box = document.getElementById('lightbox');
@@ -468,7 +409,7 @@
         el.addEventListener('click', function (e) {
           e.preventDefault();
           img.src = el.getAttribute('href');
-          img.alt = el.querySelector('img').alt || '';
+          img.alt = (el.querySelector('img') || {}).alt || '';
           box.classList.add('open');
         });
       });

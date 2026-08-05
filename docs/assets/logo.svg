@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="Kuadrant Console">
+  <rect width="128" height="128" rx="24" fill="#E8F4FC"/>
+  <!-- soft console frame -->
+  <rect x="22" y="28" width="84" height="72" rx="8" fill="#fff" stroke="#7A9BB8" stroke-width="3"/>
+  <rect x="22" y="28" width="84" height="14" rx="8" fill="#0A2F5C"/>
+  <circle cx="34" cy="35" r="2.5" fill="#EE0000"/>
+  <circle cx="44" cy="35" r="2.5" fill="#F0AB00"/>
+  <circle cx="54" cy="35" r="2.5" fill="#3E8635"/>
+  <!-- gateway mesh -->
+  <circle cx="44" cy="62" r="7" fill="#0A2F5C"/>
+  <circle cx="84" cy="62" r="7" fill="#0A2F5C"/>
+  <circle cx="64" cy="88" r="8" fill="#EE0000"/>
+  <path d="M50 65 L77 65" stroke="#0A2F5C" stroke-width="3.5" stroke-linecap="round"/>
+  <path d="M48 68 L60 82" stroke="#0A2F5C" stroke-width="3.5" stroke-linecap="round"/>
+  <path d="M80 68 L68 82" stroke="#0A2F5C" stroke-width="3.5" stroke-linecap="round"/>
+  <!-- route arcs -->
+  <path d="M44 55 C44 46, 84 46, 84 55" fill="none" stroke="#2B9AF3" stroke-width="2.5" stroke-linecap="round"/>
+</svg>
