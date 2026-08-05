@@ -27,9 +27,9 @@ entries:
       artifacthub.io/operator: "false"
     apiVersion: v2
     appVersion: 1.3.0
-    created: "2026-08-05T10:29:27.8360664-03:00"
+    created: "2026-08-05T13:35:17.157297414Z"
     description: OpenShift Console dynamic plugin for Red Hat Connectivity Link (Kuadrant)
-    digest: d4a7611b6cc57ef5c45211577791876ae10b8d4cb45ba51dd52426b9de4b4d1f
+    digest: 08a2eec7043ef7fa4c4eb580abe71897581c23abbaa2d582d69ebdeb64bdf4c8
     home: https://maximilianoPizarro.github.io/custom-rhcl-console/
     maintainers:
     - email: maximiliano.pizarro.5@gmail.com
@@ -41,4 +41,4 @@ entries:
     urls:
     - https://maximilianoPizarro.github.io/custom-rhcl-console/custom-rhcl-console-0.1.1.tgz
     version: 0.1.1
-generated: "2026-08-05T10:29:27.8350372-03:00"
+generated: "2026-08-05T13:35:17.156557422Z"
