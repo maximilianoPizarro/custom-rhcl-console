@@ -347,14 +347,14 @@ const SettingsPage: React.FC = () => {
       rows: [
         { label: t('Namespace'), value: <code>{tempoNs}</code> },
         { label: t('Gateway route'), value: <code>{tempoRouteName}</code> },
-        { label: t('Stack name'), value: codeOrDefault(config.tempoStackName, 'tempo-rhcl') },
+        { label: t('Instance name'), value: codeOrDefault(config.tempoStackName, 'tempo-rhcl') },
       ],
       warningPanel:
         tempoState === 'optional'
           ? {
               title: t('Distributed traces are unavailable'),
               body: t(
-                'No TempoStack was found in the configured namespace, so "View traces" deep links on Gateway and HTTPRoute pages stay disabled. Install a TempoStack to enable end-to-end tracing.',
+                'No TempoStack or TempoMonolithic was found in the configured namespace, so "View traces" deep links on Gateway and HTTPRoute pages stay disabled. Install a TempoStack or TempoMonolithic to enable end-to-end tracing.',
               ),
             }
           : undefined,

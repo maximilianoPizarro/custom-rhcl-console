@@ -346,7 +346,7 @@ const SettingsEditModal: React.FC<Props> = ({ isOpen, onClose, config, cm, names
               <Field label={t('Tempo gateway route')} value={tempoGatewayRouteName} onChange={setTempoGatewayRouteName} placeholder="tempo-tempo-rhcl-gateway" />
             </GridItem>
             <GridItem md={4} span={12}>
-              <Field label={t('TempoStack name')} value={tempoStackName} onChange={setTempoStackName} placeholder="tempo-rhcl" />
+              <Field label={t('Tempo instance name')} value={tempoStackName} onChange={setTempoStackName} placeholder="tempo-rhcl" />
             </GridItem>
           </Grid>
 
