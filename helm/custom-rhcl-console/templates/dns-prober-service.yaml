@@ -1,0 +1,26 @@
+{{- if .Values.dnsProber.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "custom-rhcl-console.dnsProber" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "custom-rhcl-console.labels" . | nindent 4 }}
+    {{- include "custom-rhcl-console.dnsProberSelectorLabels" . | nindent 4 }}
+  annotations:
+    # Ask the service-serving-cert operator for a signed cert. The
+    # ConsolePlugin proxy requires HTTPS on the target Service.
+    service.beta.openshift.io/serving-cert-secret-name: {{ .Values.dnsProber.service.servingCertSecretName }}
+spec:
+  selector:
+    {{- include "custom-rhcl-console.dnsProberSelectorLabels" . | nindent 4 }}
+  ports:
+    - name: http
+      port: {{ .Values.dnsProber.service.httpPort }}
+      targetPort: http
+      protocol: TCP
+    - name: https
+      port: {{ .Values.dnsProber.service.httpsPort }}
+      targetPort: https
+      protocol: TCP
+{{- end }}

@@ -1,0 +1,48 @@
+# Example Argo CD Application for custom-rhcl-console
+# Apply with: oc apply -f examples/gitops/application.yaml
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: custom-rhcl-console
+  namespace: openshift-gitops
+  annotations:
+    argocd.argoproj.io/sync-wave: "10"
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/maximilianoPizarro/custom-rhcl-console.git
+    targetRevision: main
+    path: helm/custom-rhcl-console
+    helm:
+      values: |
+        image:
+          repository: quay.io/maximilianopizarro/custom-rhcl-console
+          tag: latest
+          pullPolicy: Always
+        consolePlugin:
+          patchConsole: true
+        dnsProber:
+          enabled: true
+          image:
+            repository: quay.io/maximilianopizarro/custom-rhcl-console-dns-prober
+            tag: latest
+            pullPolicy: Always
+        config:
+          grafanaNamespace: observability
+          grafanaRouteName: grafana
+          tempoNamespace: tempo
+          tempoGatewayRouteName: tempo-tempo-rhcl-gateway
+          developerPortalUrl: ""
+          developerHubUrl: ""
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: custom-rhcl-console
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true

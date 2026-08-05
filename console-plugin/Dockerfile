@@ -1,11 +1,11 @@
-FROM registry.access.redhat.com/ubi9/nodejs-22:latest AS build
+FROM registry.redhat.io/ubi9/nodejs-22:latest AS build
 USER root
 
 COPY . /usr/src/app
 WORKDIR /usr/src/app
 RUN npm ci && npm run build
 
-FROM registry.access.redhat.com/ubi9/nginx-120:latest
+FROM registry.redhat.io/ubi9/nginx-124:latest
 
 # Custom nginx config: listens on 9001 with TLS (serving cert mounted by the
 # Deployment from the openshift-service-ca-managed Secret at /var/serving-cert),

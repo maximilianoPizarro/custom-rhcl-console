@@ -1,0 +1,7 @@
+# Ignore Maven / IDE noise when building the dns-prober image
+target/
+.idea/
+*.iml
+.classpath
+.project
+.settings/

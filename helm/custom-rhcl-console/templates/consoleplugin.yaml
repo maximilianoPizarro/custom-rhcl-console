@@ -1,0 +1,27 @@
+apiVersion: console.openshift.io/v1
+kind: ConsolePlugin
+metadata:
+  name: {{ include "custom-rhcl-console.pluginName" . }}
+  labels:
+    {{- include "custom-rhcl-console.labels" . | nindent 4 }}
+    app.kubernetes.io/name: {{ include "custom-rhcl-console.name" . }}
+spec:
+  displayName: {{ .Values.consolePlugin.displayName | quote }}
+  backend:
+    type: Service
+    service:
+      name: {{ include "custom-rhcl-console.fullname" . }}
+      namespace: {{ .Release.Namespace }}
+      port: {{ .Values.service.port }}
+      basePath: /
+  {{- if .Values.dnsProber.enabled }}
+  proxy:
+    - alias: dns-prober
+      authorize: true
+      endpoint:
+        type: Service
+        service:
+          name: {{ include "custom-rhcl-console.dnsProber" . }}
+          namespace: {{ .Release.Namespace }}
+          port: {{ .Values.dnsProber.service.httpsPort }}
+  {{- end }}

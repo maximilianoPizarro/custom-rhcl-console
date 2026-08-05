@@ -1,0 +1,10 @@
+# Artifact Hub repository metadata
+# Register this Helm repo on https://artifacthub.io pointing at:
+#   https://maximilianoPizarro.github.io/custom-rhcl-console/
+# After registration, Artifact Hub shows a repositoryID — paste it below
+# to claim ownership (optional but recommended).
+#
+# repositoryID: "<uuid-from-artifact-hub>"
+owners:
+  - name: Maximiliano Pizarro
+    email: maximiliano.pizarro.5@gmail.com

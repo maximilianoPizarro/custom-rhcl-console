@@ -1,0 +1,49 @@
+{{- if .Values.config.create }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.config.name }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "custom-rhcl-console.labels" . | nindent 4 }}
+    app.kubernetes.io/name: {{ include "custom-rhcl-console.name" . }}
+    app.kubernetes.io/component: config
+data:
+  {{- if .Values.config.grafanaNamespace }}
+  grafanaNamespace: {{ .Values.config.grafanaNamespace | quote }}
+  {{- end }}
+  {{- if .Values.config.grafanaRouteName }}
+  grafanaRouteName: {{ .Values.config.grafanaRouteName | quote }}
+  {{- end }}
+  {{- if .Values.config.grafanaDashboardPrefix }}
+  grafanaDashboardPrefix: {{ .Values.config.grafanaDashboardPrefix | quote }}
+  {{- end }}
+  {{- if .Values.config.tempoNamespace }}
+  tempoNamespace: {{ .Values.config.tempoNamespace | quote }}
+  {{- end }}
+  {{- if .Values.config.tempoGatewayRouteName }}
+  tempoGatewayRouteName: {{ .Values.config.tempoGatewayRouteName | quote }}
+  {{- end }}
+  {{- if .Values.config.tempoStackName }}
+  tempoStackName: {{ .Values.config.tempoStackName | quote }}
+  {{- end }}
+  {{- if .Values.config.developerPortalUrl }}
+  developerPortalUrl: {{ .Values.config.developerPortalUrl | quote }}
+  {{- end }}
+  {{- if .Values.config.developerHubUrl }}
+  internalDeveloperHubUrl: {{ .Values.config.developerHubUrl | quote }}
+  {{- end }}
+  {{- if .Values.config.costCurrency }}
+  costCurrency: {{ .Values.config.costCurrency | quote }}
+  {{- end }}
+  {{- if .Values.config.costPricing }}
+  costPricing: {{ .Values.config.costPricing | quote }}
+  {{- end }}
+  {{- if .Values.config.costBudget }}
+  costBudget: {{ .Values.config.costBudget | quote }}
+  {{- end }}
+  {{- $dnsProberUrl := include "custom-rhcl-console.dnsProberUrl" . }}
+  {{- if $dnsProberUrl }}
+  dnsProberUrl: {{ $dnsProberUrl | quote }}
+  {{- end }}
+{{- end }}

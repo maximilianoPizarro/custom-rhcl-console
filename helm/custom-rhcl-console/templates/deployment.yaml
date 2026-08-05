@@ -1,0 +1,55 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "custom-rhcl-console.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "custom-rhcl-console.labels" . | nindent 4 }}
+    {{- include "custom-rhcl-console.selectorLabels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicas }}
+  selector:
+    matchLabels:
+      {{- include "custom-rhcl-console.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "custom-rhcl-console.labels" . | nindent 8 }}
+        {{- include "custom-rhcl-console.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "custom-rhcl-console.serviceAccountName" . }}
+      containers:
+        - name: custom-rhcl-console
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: https
+              containerPort: {{ .Values.service.port }}
+              protocol: TCP
+          volumeMounts:
+            - name: serving-cert
+              mountPath: /var/serving-cert
+              readOnly: true
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          readinessProbe:
+            tcpSocket:
+              port: https
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            tcpSocket:
+              port: https
+            initialDelaySeconds: 15
+            periodSeconds: 20
+      volumes:
+        - name: serving-cert
+          secret:
+            # Matches the Service annotation. The Secret is populated
+            # asynchronously by the service-CA operator; the pod may
+            # CrashLoop briefly on first start while the cert lands.
+            secretName: {{ .Values.service.servingCertSecretName }}

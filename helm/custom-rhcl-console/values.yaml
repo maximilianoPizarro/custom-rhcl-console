@@ -1,0 +1,109 @@
+# Default values for custom-rhcl-console.
+# This is a YAML-formatted file.
+
+nameOverride: ""
+fullnameOverride: ""
+
+# Create the release namespace if it does not exist (useful for helm install --create-namespace alternatives)
+createNamespace: false
+
+imagePullSecrets: []
+
+# Plugin nginx container (serves webpack assets over HTTPS:9001)
+image:
+  repository: quay.io/maximilianopizarro/custom-rhcl-console
+  tag: v0.1.0
+  pullPolicy: Always
+
+replicas: 1
+
+resources:
+  requests:
+    cpu: 50m
+    memory: 64Mi
+  limits:
+    cpu: 200m
+    memory: 256Mi
+
+serviceAccount:
+  create: true
+  name: ""
+  annotations: {}
+
+# Service port exposed to the OpenShift Console (must be HTTPS)
+service:
+  port: 9001
+  # Secret name minted by the OpenShift service-CA operator
+  servingCertSecretName: custom-rhcl-console-tls
+
+# ConsolePlugin registration (cluster-scoped)
+consolePlugin:
+  # Must match the proxy path hardcoded in the plugin:
+  # /api/proxy/plugin/custom-rhcl-console/dns-prober
+  name: custom-rhcl-console
+  displayName: "Connectivity Link"
+  # When true, a post-install Job patches console.operator.openshift.io/cluster
+  # to enable this plugin in the admin console sidebar.
+  patchConsole: true
+
+# Runtime ConfigMap watched by the browser plugin (flat string→string map).
+# The plugin hardcodes ConfigMap name/namespace as
+# custom-rhcl-console/custom-rhcl-console-config — install this chart into
+# that namespace (or override config.name only if you also patch the plugin).
+config:
+  create: true
+  name: custom-rhcl-console-config
+  grafanaNamespace: ""
+  grafanaRouteName: ""
+  grafanaDashboardPrefix: ""
+  tempoNamespace: ""
+  tempoGatewayRouteName: ""
+  tempoStackName: ""
+  developerPortalUrl: ""
+  # Maps to ConfigMap key internalDeveloperHubUrl
+  developerHubUrl: ""
+  costCurrency: ""
+  costPricing: ""
+  costBudget: ""
+  # Set automatically when dnsProber.enabled=true unless overridden here
+  dnsProberUrl: ""
+
+# Optional Quarkus companion for live DNS/TLS/header probes
+dnsProber:
+  enabled: true
+  image:
+    repository: quay.io/maximilianopizarro/custom-rhcl-console-dns-prober
+    tag: v0.1.0
+    pullPolicy: Always
+  replicas: 1
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+  service:
+    httpPort: 8080
+    httpsPort: 8443
+    servingCertSecretName: dns-prober-tls
+  route:
+    enabled: true
+    host: ""
+    tls:
+      termination: edge
+      insecureEdgeTerminationPolicy: Redirect
+
+# OpenShift Route for the plugin Service itself (usually unnecessary —
+# the Console loads the plugin via the in-cluster Service)
+route:
+  enabled: false
+  host: ""
+  tls:
+    termination: edge
+    insecureEdgeTerminationPolicy: Redirect
+
+# Job image used when consolePlugin.patchConsole=true
+patchJob:
+  image: quay.io/openshift/origin-cli:latest
+  imagePullPolicy: IfNotPresent

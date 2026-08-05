@@ -1,0 +1,22 @@
+{{- if .Values.route.enabled }}
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: {{ include "custom-rhcl-console.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "custom-rhcl-console.labels" . | nindent 4 }}
+    {{- include "custom-rhcl-console.selectorLabels" . | nindent 4 }}
+spec:
+  {{- if .Values.route.host }}
+  host: {{ .Values.route.host | quote }}
+  {{- end }}
+  to:
+    kind: Service
+    name: {{ include "custom-rhcl-console.fullname" . }}
+  port:
+    targetPort: https
+  tls:
+    termination: {{ .Values.route.tls.termination }}
+    insecureEdgeTerminationPolicy: {{ .Values.route.tls.insecureEdgeTerminationPolicy }}
+{{- end }}

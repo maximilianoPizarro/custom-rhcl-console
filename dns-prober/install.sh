@@ -5,7 +5,7 @@
 #
 #   1. Build the container image locally (podman).
 #   2. Push it to a registry the cluster can pull from (default: the
-#      hodrigohamalho quay account the plugin already uses).
+#      maximilianopizarro quay account the plugin already uses).
 #   3. Apply the Deployment / Service / Route manifests.
 #   4. Patch the plugin ConfigMap with `dnsProberUrl` so the DNS
 #      Troubleshooting page swaps its EmptyState for real data.
@@ -13,14 +13,14 @@
 #
 # Overrides:
 #   IMAGE=<repo>       — override the target image; defaults to
-#                        quay.io/hodrigohamalho/custom-rhcl-console:dns-prober
+#                        quay.io/maximilianopizarro/custom-rhcl-console-dns-prober:latest
 #   SKIP_BUILD=1       — reuse whatever the image tag currently points at
 #   SKIP_CONFIGMAP=1   — apply/patch nothing on the ConfigMap (useful
 #                        when the operator manages that CM by hand)
 
 set -euo pipefail
 
-IMAGE="${IMAGE:-quay.io/hodrigohamalho/custom-rhcl-console:dns-prober}"
+IMAGE="${IMAGE:-quay.io/maximilianopizarro/custom-rhcl-console-dns-prober:latest}"
 NAMESPACE="${NAMESPACE:-custom-rhcl-console}"
 CONFIGMAP="${CONFIGMAP:-custom-rhcl-console-config}"
 CONFIGMAP_NAMESPACE="${CONFIGMAP_NAMESPACE:-custom-rhcl-console}"

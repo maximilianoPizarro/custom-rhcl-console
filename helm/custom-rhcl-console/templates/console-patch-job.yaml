@@ -1,0 +1,89 @@
+{{- if .Values.consolePlugin.patchConsole }}
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ include "custom-rhcl-console.fullname" . }}-console-patcher
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "custom-rhcl-console.labels" . | nindent 4 }}
+  annotations:
+    helm.sh/hook: post-install,post-upgrade
+    helm.sh/hook-weight: "-5"
+    helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ include "custom-rhcl-console.fullname" . }}-console-patcher
+  labels:
+    {{- include "custom-rhcl-console.labels" . | nindent 4 }}
+  annotations:
+    helm.sh/hook: post-install,post-upgrade
+    helm.sh/hook-weight: "-5"
+    helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
+rules:
+  - apiGroups: ["operator.openshift.io"]
+    resources: ["consoles"]
+    verbs: ["get", "patch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: {{ include "custom-rhcl-console.fullname" . }}-console-patcher
+  labels:
+    {{- include "custom-rhcl-console.labels" . | nindent 4 }}
+  annotations:
+    helm.sh/hook: post-install,post-upgrade
+    helm.sh/hook-weight: "-5"
+    helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: {{ include "custom-rhcl-console.fullname" . }}-console-patcher
+subjects:
+  - kind: ServiceAccount
+    name: {{ include "custom-rhcl-console.fullname" . }}-console-patcher
+    namespace: {{ .Release.Namespace }}
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "custom-rhcl-console.fullname" . }}-enable-plugin
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "custom-rhcl-console.labels" . | nindent 4 }}
+  annotations:
+    helm.sh/hook: post-install,post-upgrade
+    helm.sh/hook-weight: "0"
+    helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
+spec:
+  ttlSecondsAfterFinished: 300
+  backoffLimit: 3
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ include "custom-rhcl-console.name" . }}
+        app.kubernetes.io/component: console-patcher
+    spec:
+      restartPolicy: OnFailure
+      serviceAccountName: {{ include "custom-rhcl-console.fullname" . }}-console-patcher
+      containers:
+        - name: patch-console
+          image: {{ .Values.patchJob.image | quote }}
+          imagePullPolicy: {{ .Values.patchJob.imagePullPolicy }}
+          command:
+            - /bin/bash
+            - -ec
+            - |
+              PLUGIN="{{ include "custom-rhcl-console.pluginName" . }}"
+              echo "Enabling ConsolePlugin ${PLUGIN} on console.operator.openshift.io/cluster"
+              # Idempotent: add plugin only if not already listed
+              CURRENT=$(oc get console.operator.openshift.io cluster -o jsonpath='{.spec.plugins}' || echo '[]')
+              if echo "${CURRENT}" | grep -q "\"${PLUGIN}\""; then
+                echo "Plugin ${PLUGIN} already enabled: ${CURRENT}"
+                exit 0
+              fi
+              oc patch console.operator.openshift.io cluster --type=json \
+                --patch="[{\"op\":\"add\",\"path\":\"/spec/plugins/-\",\"value\":\"${PLUGIN}\"}]"
+              echo "Plugin ${PLUGIN} enabled."
+{{- end }}

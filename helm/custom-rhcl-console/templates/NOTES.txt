@@ -1,0 +1,30 @@
+1. The ConsolePlugin **{{ include "custom-rhcl-console.pluginName" . }}** has been created.
+{{- if .Values.consolePlugin.patchConsole }}
+
+2. A post-install Job patched `console.operator.openshift.io/cluster` to enable the plugin.
+   After a few seconds the OpenShift Console reloads and **{{ .Values.consolePlugin.displayName }}** appears in the admin navigation.
+{{- else }}
+
+2. Enable the plugin on the cluster:
+
+   oc patch console.operator.openshift.io cluster \
+     --type=json \
+     --patch='[{"op":"add","path":"/spec/plugins/-","value":"{{ include "custom-rhcl-console.pluginName" . }}"}]'
+{{- end }}
+
+3. Verify the plugin pod is ready:
+
+   oc -n {{ .Release.Namespace }} get pods -l app={{ include "custom-rhcl-console.fullname" . }}
+   oc -n {{ .Release.Namespace }} get secret {{ .Values.service.servingCertSecretName }}
+
+{{- if .Values.dnsProber.enabled }}
+
+4. dns-prober companion is enabled. The ConsolePlugin proxy alias is
+   `/api/proxy/plugin/{{ include "custom-rhcl-console.pluginName" . }}/dns-prober`.
+{{- end }}
+
+IMPORTANT: Install this chart into the **custom-rhcl-console** namespace.
+The browser plugin hardcodes ConfigMap lookups to
+`custom-rhcl-console/{{ .Values.config.name }}`.
+
+For more details see: https://github.com/maximilianoPizarro/custom-rhcl-console

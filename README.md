@@ -72,6 +72,10 @@ See [SPECIFICATION.md](SPECIFICATION.md) for the full requirements
 custom-rhcl-console/
 ├── SPECIFICATION.md          # Authoritative spec — all PRs cite FR/NFR
 ├── README.md                 # This file
+├── helm/custom-rhcl-console/ # Helm chart (Artifact Hub / GitOps)
+├── .github/workflows/        # Quay build + Helm chart-releaser
+├── examples/gitops/          # Argo CD Application + helmApps snippet
+├── dns-prober/               # Optional Quarkus DNS/TLS probe companion
 └── console-plugin/           # OpenShift Console dynamic plugin (React/TS)
     ├── package.json          # consolePlugin metadata + dependencies
     ├── console-extensions.json
@@ -132,14 +136,48 @@ output. Build it from the `console-plugin/` directory:
 ```bash
 cd console-plugin
 
-podman build -t quay.io/<org>/custom-rhcl-console:latest .
-podman push quay.io/<org>/custom-rhcl-console:latest
+# Requires login to registry.redhat.io for UBI base images
+podman login registry.redhat.io
+
+podman build -t quay.io/maximilianopizarro/custom-rhcl-console:latest .
+podman push quay.io/maximilianopizarro/custom-rhcl-console:latest
 ```
 
-The two-stage Dockerfile uses `ubi9/nodejs-22` for the build and
-`ubi9/nginx-120` for the runtime image.
+The two-stage Dockerfile uses `registry.redhat.io/ubi9/nodejs-22` for the
+build and `registry.redhat.io/ubi9/nginx-124` for the runtime image.
 
-## Deploying to OpenShift
+CI builds and pushes both the plugin and dns-prober images to
+`quay.io/maximilianopizarro/` on every push to `main` (see
+[`.github/workflows/build-push.yaml`](.github/workflows/build-push.yaml)).
+
+### Required GitHub Actions secrets
+
+| Secret | Purpose |
+|---|---|
+| `QUAY_USER` | Quay.io username |
+| `QUAY_PASSWORD` | Quay.io password / robot token |
+| `REDHAT_REGISTRY_USERNAME` | Red Hat registry username (`registry.redhat.io`) |
+| `REDHAT_REGISTRY_PASSWORD` | Red Hat registry password / token |
+
+## Helm chart (recommended)
+
+```bash
+helm upgrade --install custom-rhcl-console ./helm/custom-rhcl-console \
+  -n custom-rhcl-console --create-namespace
+```
+
+The chart creates the Deployment, Service (with service-CA TLS), ConfigMap,
+`ConsolePlugin` CR, optional **dns-prober** companion, and (by default) a
+Job that enables the plugin on `console.operator.openshift.io/cluster`.
+
+Install into the **`custom-rhcl-console`** namespace — the browser plugin
+hardcodes ConfigMap lookups to that namespace.
+
+See [`helm/custom-rhcl-console/README.md`](helm/custom-rhcl-console/README.md)
+and [`examples/gitops/`](examples/gitops/) for Artifact Hub / Argo CD wiring
+into [from-3scale-to-connectivity-link](https://github.com/maximilianoPizarro/from-3scale-to-connectivity-link).
+
+## Deploying to OpenShift (manual)
 
 The plugin pod runs an nginx that serves the bundled assets over **HTTPS on
 port 9001** using a service-CA-signed certificate the OpenShift platform
@@ -151,7 +189,7 @@ manifest" errors and is the most common first-time mistake.
 
 ```bash
 export RHCL_CONSOLE_NS=custom-rhcl-console
-export RHCL_CONSOLE_IMAGE=quay.io/hodrigohamalho/custom-rhcl-console:latest
+export RHCL_CONSOLE_IMAGE=quay.io/maximilianopizarro/custom-rhcl-console:latest
 
 oc new-project "$RHCL_CONSOLE_NS" || true
 

@@ -1,0 +1,59 @@
+{{- if .Values.dnsProber.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "custom-rhcl-console.dnsProber" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "custom-rhcl-console.labels" . | nindent 4 }}
+    {{- include "custom-rhcl-console.dnsProberSelectorLabels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.dnsProber.replicas }}
+  selector:
+    matchLabels:
+      {{- include "custom-rhcl-console.dnsProberSelectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "custom-rhcl-console.labels" . | nindent 8 }}
+        {{- include "custom-rhcl-console.dnsProberSelectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "custom-rhcl-console.dnsProber" . }}
+      containers:
+        - name: dns-prober
+          image: "{{ .Values.dnsProber.image.repository }}:{{ .Values.dnsProber.image.tag }}"
+          imagePullPolicy: {{ .Values.dnsProber.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.dnsProber.service.httpPort }}
+              protocol: TCP
+            - name: https
+              containerPort: {{ .Values.dnsProber.service.httpsPort }}
+              protocol: TCP
+          volumeMounts:
+            - name: tls
+              mountPath: /etc/dns-prober-tls
+              readOnly: true
+          readinessProbe:
+            httpGet:
+              path: /q/health/ready
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /q/health/live
+              port: http
+            initialDelaySeconds: 20
+            periodSeconds: 15
+          resources:
+            {{- toYaml .Values.dnsProber.resources | nindent 12 }}
+      volumes:
+        - name: tls
+          secret:
+            secretName: {{ .Values.dnsProber.service.servingCertSecretName }}
+{{- end }}
