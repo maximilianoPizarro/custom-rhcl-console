@@ -1,5 +1,12 @@
 # Custom RHCL Console
 
+[![Artifact HUB](https://img.shields.io/endpoint?url=https://artifacthub.io/badge/repository/custom-rhcl-console)](https://artifacthub.io/packages/helm/custom-rhcl-console/custom-rhcl-console)
+[![Quay](https://img.shields.io/badge/Quay.io-maximilianopizarro%2Fcustom--rhcl--console-blue?logo=redhat)](https://quay.io/repository/maximilianopizarro/custom-rhcl-console)
+[![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=white)](#)
+[![React](https://img.shields.io/badge/React-61DAFB?logo=react&logoColor=black)](#)
+[![PatternFly](https://img.shields.io/badge/PatternFly-06C?logo=redhat&logoColor=white)](#)
+[![Java](https://img.shields.io/badge/Java-ED8B00?logo=openjdk&logoColor=white)](#)
+
 A custom OpenShift Console dynamic plugin for
 [Red Hat Connectivity Link](https://docs.kuadrant.io) (RHCL / Kuadrant).
 It surfaces operationally critical data — hostnames, attached policies,
