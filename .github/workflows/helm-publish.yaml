@@ -75,16 +75,22 @@ jobs:
           HELM_REPO_URL: https://maximilianoPizarro.github.io/custom-rhcl-console
         run: |
           mkdir -p docs
+          # Single version only: drop previous chart packages so Artifact Hub
+          # does not keep invalid historical entries (e.g. bad category).
+          rm -f docs/custom-rhcl-console-*.tgz
           helm package helm/custom-rhcl-console --destination docs/
-          if [ -f docs/index.yaml ]; then
-            helm repo index docs/ --url "${HELM_REPO_URL}" --merge docs/index.yaml
-          else
-            helm repo index docs/ --url "${HELM_REPO_URL}"
-          fi
+          helm repo index docs/ --url "${HELM_REPO_URL}"
           test -f "docs/custom-rhcl-console-${{ steps.version.outputs.version }}.tgz"
           test -f docs/index.yaml
           test -f docs/artifacthub-repo.yml
           test -f docs/index.html
+          # Guard: index must list exactly one chart version
+          versions=$(grep -c '^    version:' docs/index.yaml || true)
+          if [ "${versions}" != "1" ]; then
+            echo "Expected exactly 1 chart version in docs/index.yaml, found ${versions}"
+            cat docs/index.yaml
+            exit 1
+          fi
 
       - name: Commit and push docs/ Helm repo
         env:
