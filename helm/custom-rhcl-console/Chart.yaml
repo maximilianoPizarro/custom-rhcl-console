@@ -2,7 +2,7 @@ apiVersion: v2
 name: custom-rhcl-console
 description: OpenShift Console dynamic plugin for Red Hat Connectivity Link (Kuadrant)
 type: application
-version: 0.1.1
+version: 0.1.2
 appVersion: "1.3.0"
 icon: https://maximilianoPizarro.github.io/custom-rhcl-console/assets/logo.svg
 home: https://maximilianoPizarro.github.io/custom-rhcl-console/
@@ -16,7 +16,7 @@ maintainers:
 annotations:
   artifacthub.io/license: Apache-2.0
   artifacthub.io/operator: "false"
-  artifacthub.io/category: monitoring
+  artifacthub.io/category: networking
   artifacthub.io/links: |
     - name: Documentation
       url: https://maximilianoPizarro.github.io/custom-rhcl-console/
