@@ -426,6 +426,8 @@ const APIKeysListPage: React.FC = () => {
                             namespace={ns}
                             name={key.metadata?.name || ''}
                             listHref="/connectivity-link/api-keys"
+                            resource={key}
+                            plural="apikeys"
                           />
                         </Td>
                       </Tr>
