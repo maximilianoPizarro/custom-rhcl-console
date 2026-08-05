@@ -142,39 +142,46 @@ const CreateAPIKeyModal: React.FC<Props> = ({
     const secretName = `${name}-secret`;
     const apiKeyValue = `${name}-${crypto.randomUUID().slice(0, 8)}`;
     try {
-      await k8sCreate<K8sResourceCommon>({
-        model: {
-          apiGroup: '',
-          apiVersion: 'v1',
-          kind: 'Secret',
-          plural: 'secrets',
-          abbr: 'S',
-          label: 'Secret',
-          labelPlural: 'Secrets',
-          namespaced: true,
-        },
-        data: {
-          apiVersion: 'v1',
-          kind: 'Secret',
-          metadata: {
-            name: secretName,
-            namespace: ns,
-            labels: {
-              app: productName,
-              'app.kubernetes.io/managed-by': 'kuadrant-console',
-              'kuadrant.io/apikey': 'true',
-              'authorino.kuadrant.io/managed-by': 'authorino',
-            },
-            annotations: {
-              'secret.kuadrant.io/plan-id': plan,
-            },
+      try {
+        await k8sCreate<K8sResourceCommon>({
+          model: {
+            apiGroup: '',
+            apiVersion: 'v1',
+            kind: 'Secret',
+            plural: 'secrets',
+            abbr: 'S',
+            label: 'Secret',
+            labelPlural: 'Secrets',
+            namespaced: true,
           },
-          type: 'Opaque',
-          stringData: {
-            api_key: apiKeyValue,
-          },
-        } as unknown as K8sResourceCommon,
-      });
+          data: {
+            apiVersion: 'v1',
+            kind: 'Secret',
+            metadata: {
+              name: secretName,
+              namespace: ns,
+              labels: {
+                app: productName,
+                'app.kubernetes.io/managed-by': 'kuadrant-console',
+                'kuadrant.io/apikey': 'true',
+                'authorino.kuadrant.io/managed-by': 'authorino',
+              },
+              annotations: {
+                'secret.kuadrant.io/plan-id': plan,
+              },
+            },
+            type: 'Opaque',
+            stringData: {
+              api_key: apiKeyValue,
+            },
+          } as unknown as K8sResourceCommon,
+        });
+      } catch (secretErr) {
+        const msg = secretErr instanceof Error ? secretErr.message : String(secretErr);
+        if (!msg.includes('already exists') && !msg.includes('AlreadyExists')) {
+          throw secretErr;
+        }
+      }
       await k8sCreate<K8sResourceCommon & { spec: unknown }>({
         model: {
           apiGroup: 'devportal.kuadrant.io',
