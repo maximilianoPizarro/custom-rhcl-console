@@ -48,7 +48,7 @@ jobs:
         uses: docker/login-action@v3
         with:
           registry: ${{ env.QUAY_REGISTRY }}
-          username: ${{ secrets.QUAY_USER }}
+          username: ${{ secrets.QUAY_USERNAME }}
           password: ${{ secrets.QUAY_PASSWORD }}
 
       - name: Login to registry.access.redhat.com

@@ -154,7 +154,7 @@ CI builds and pushes both the plugin and dns-prober images to
 
 | Secret | Purpose |
 |---|---|
-| `QUAY_USER` | Quay.io username |
+| `QUAY_USERNAME` | Quay.io username |
 | `QUAY_PASSWORD` | Quay.io password / robot token |
 | `REDHAT_REGISTRY_USERNAME` | Red Hat registry username (`registry.redhat.io`) |
 | `REDHAT_REGISTRY_PASSWORD` | Red Hat registry password / token |
