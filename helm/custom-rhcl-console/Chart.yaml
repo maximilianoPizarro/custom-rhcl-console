@@ -32,8 +32,8 @@ annotations:
       url: https://ux.redhat.com/
   artifacthub.io/images: |
     - name: plugin
-      image: quay.io/maximilianopizarro/custom-rhcl-console:v0.1.1
+      image: quay.io/maximilianopizarro/custom-rhcl-console:v0.1.2
       whitelisted: true
     - name: dns-prober
-      image: quay.io/maximilianopizarro/custom-rhcl-console:dns-prober-v0.1.1
+      image: quay.io/maximilianopizarro/custom-rhcl-console:dns-prober-v0.1.2
       whitelisted: true

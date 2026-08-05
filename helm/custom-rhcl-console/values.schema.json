@@ -1,0 +1,255 @@
+{
+  "$schema": "https://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "nameOverride": {
+      "type": "string",
+      "default": ""
+    },
+    "fullnameOverride": {
+      "type": "string",
+      "default": ""
+    },
+    "createNamespace": {
+      "type": "boolean",
+      "default": false,
+      "description": "Create the release namespace if it does not exist."
+    },
+    "imagePullSecrets": {
+      "type": "array",
+      "items": { "type": "object" },
+      "default": []
+    },
+    "image": {
+      "type": "object",
+      "description": "Plugin nginx container (serves webpack assets over HTTPS:9001).",
+      "properties": {
+        "repository": {
+          "type": "string",
+          "default": "quay.io/maximilianopizarro/custom-rhcl-console"
+        },
+        "tag": {
+          "type": "string",
+          "default": "v0.1.2"
+        },
+        "pullPolicy": {
+          "type": "string",
+          "enum": ["Always", "IfNotPresent", "Never"],
+          "default": "Always"
+        }
+      }
+    },
+    "replicas": {
+      "type": "integer",
+      "minimum": 0,
+      "default": 1
+    },
+    "resources": {
+      "type": "object",
+      "properties": {
+        "requests": {
+          "type": "object",
+          "properties": {
+            "cpu": { "type": "string" },
+            "memory": { "type": "string" }
+          }
+        },
+        "limits": {
+          "type": "object",
+          "properties": {
+            "cpu": { "type": "string" },
+            "memory": { "type": "string" }
+          }
+        }
+      }
+    },
+    "serviceAccount": {
+      "type": "object",
+      "properties": {
+        "create": { "type": "boolean", "default": true },
+        "name": { "type": "string", "default": "" },
+        "annotations": { "type": "object" }
+      }
+    },
+    "service": {
+      "type": "object",
+      "properties": {
+        "port": {
+          "type": "integer",
+          "default": 9001,
+          "description": "Service port exposed to the OpenShift Console (must be HTTPS)."
+        },
+        "servingCertSecretName": {
+          "type": "string",
+          "default": "custom-rhcl-console-tls",
+          "description": "Secret name minted by the OpenShift service-CA operator."
+        }
+      }
+    },
+    "consolePlugin": {
+      "type": "object",
+      "description": "ConsolePlugin registration (cluster-scoped).",
+      "properties": {
+        "name": {
+          "type": "string",
+          "default": "custom-rhcl-console"
+        },
+        "displayName": {
+          "type": "string",
+          "default": "Connectivity Link"
+        },
+        "patchConsole": {
+          "type": "boolean",
+          "default": true,
+          "description": "When true, a post-install Job patches console.operator to enable this plugin."
+        }
+      }
+    },
+    "config": {
+      "type": "object",
+      "description": "Runtime ConfigMap watched by the browser plugin (flat string→string map).",
+      "properties": {
+        "create": { "type": "boolean", "default": true },
+        "name": { "type": "string", "default": "custom-rhcl-console-config" },
+        "grafanaNamespace": { "type": "string", "default": "" },
+        "grafanaRouteName": { "type": "string", "default": "" },
+        "grafanaDashboardPrefix": { "type": "string", "default": "" },
+        "tempoNamespace": {
+          "type": "string",
+          "default": "",
+          "description": "Namespace where the TempoStack or TempoMonolithic CR lives."
+        },
+        "tempoGatewayRouteName": { "type": "string", "default": "" },
+        "tempoStackName": {
+          "type": "string",
+          "default": "",
+          "description": "Name of the TempoStack or TempoMonolithic CR instance."
+        },
+        "developerPortalUrl": {
+          "type": "string",
+          "default": "",
+          "description": "Absolute URL of the external Developer Portal. Shows sidebar item when set."
+        },
+        "developerHubUrl": {
+          "type": "string",
+          "default": "",
+          "description": "Absolute URL of Red Hat Developer Hub. Maps to ConfigMap key internalDeveloperHubUrl."
+        },
+        "costCurrency": {
+          "type": "string",
+          "default": "",
+          "description": "Currency code shown next to monetary values (e.g. BRL, USD)."
+        },
+        "costPricing": {
+          "type": "string",
+          "default": "",
+          "description": "JSON-encoded record of tier → {tokens_per_1k, calls_per_1k}."
+        },
+        "costBudget": {
+          "type": "string",
+          "default": "",
+          "description": "Monthly budget in costCurrency units. Shows budget KPI when set."
+        },
+        "dnsProberUrl": {
+          "type": "string",
+          "default": "",
+          "description": "Absolute URL of the DNS Prober service. Set automatically when dnsProber.enabled=true."
+        }
+      }
+    },
+    "dnsProber": {
+      "type": "object",
+      "description": "Optional Quarkus companion for live DNS/TLS/header probes.",
+      "properties": {
+        "enabled": { "type": "boolean", "default": true },
+        "image": {
+          "type": "object",
+          "properties": {
+            "repository": {
+              "type": "string",
+              "default": "quay.io/maximilianopizarro/custom-rhcl-console"
+            },
+            "tag": {
+              "type": "string",
+              "default": "dns-prober-v0.1.2"
+            },
+            "pullPolicy": {
+              "type": "string",
+              "enum": ["Always", "IfNotPresent", "Never"],
+              "default": "Always"
+            }
+          }
+        },
+        "replicas": { "type": "integer", "minimum": 0, "default": 1 },
+        "resources": {
+          "type": "object",
+          "properties": {
+            "requests": {
+              "type": "object",
+              "properties": {
+                "cpu": { "type": "string" },
+                "memory": { "type": "string" }
+              }
+            },
+            "limits": {
+              "type": "object",
+              "properties": {
+                "cpu": { "type": "string" },
+                "memory": { "type": "string" }
+              }
+            }
+          }
+        },
+        "service": {
+          "type": "object",
+          "properties": {
+            "httpPort": { "type": "integer", "default": 8080 },
+            "httpsPort": { "type": "integer", "default": 8443 },
+            "servingCertSecretName": { "type": "string", "default": "dns-prober-tls" }
+          }
+        },
+        "route": {
+          "type": "object",
+          "properties": {
+            "enabled": { "type": "boolean", "default": true },
+            "host": { "type": "string", "default": "" },
+            "tls": {
+              "type": "object",
+              "properties": {
+                "termination": { "type": "string", "default": "edge" },
+                "insecureEdgeTerminationPolicy": { "type": "string", "default": "Redirect" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "route": {
+      "type": "object",
+      "description": "OpenShift Route for the plugin Service (usually unnecessary).",
+      "properties": {
+        "enabled": { "type": "boolean", "default": false },
+        "host": { "type": "string", "default": "" },
+        "tls": {
+          "type": "object",
+          "properties": {
+            "termination": { "type": "string", "default": "edge" },
+            "insecureEdgeTerminationPolicy": { "type": "string", "default": "Redirect" }
+          }
+        }
+      }
+    },
+    "patchJob": {
+      "type": "object",
+      "description": "Job image used when consolePlugin.patchConsole=true.",
+      "properties": {
+        "image": { "type": "string", "default": "quay.io/openshift/origin-cli:latest" },
+        "imagePullPolicy": {
+          "type": "string",
+          "enum": ["Always", "IfNotPresent", "Never"],
+          "default": "IfNotPresent"
+        }
+      }
+    }
+  }
+}
