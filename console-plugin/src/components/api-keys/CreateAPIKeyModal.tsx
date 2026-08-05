@@ -139,11 +139,42 @@ const CreateAPIKeyModal: React.FC<Props> = ({
     const ns = selectedProduct.metadata?.namespace as string;
     const productName = selectedProduct.metadata?.name as string;
     const name = derivedName;
+    const secretName = `${name}-secret`;
+    const apiKeyValue = `${name}-${crypto.randomUUID().slice(0, 8)}`;
     try {
+      await k8sCreate<K8sResourceCommon>({
+        model: {
+          apiGroup: '',
+          apiVersion: 'v1',
+          kind: 'Secret',
+          plural: 'secrets',
+          abbr: 'S',
+          label: 'Secret',
+          labelPlural: 'Secrets',
+          namespaced: true,
+        },
+        data: {
+          apiVersion: 'v1',
+          kind: 'Secret',
+          metadata: {
+            name: secretName,
+            namespace: ns,
+            labels: {
+              'app.kubernetes.io/managed-by': 'kuadrant-console',
+              'kuadrant.io/apikey': 'true',
+              'authorino.kuadrant.io/managed-by': 'authorino',
+            },
+            annotations: {
+              'secret.kuadrant.io/plan-id': plan,
+            },
+          },
+          type: 'Opaque',
+          stringData: {
+            api_key: apiKeyValue,
+          },
+        } as unknown as K8sResourceCommon,
+      });
       await k8sCreate<K8sResourceCommon & { spec: unknown }>({
-        // The plugin's models file uses the K8sModel shape — the
-        // minimum k8sCreate needs is apiGroup/apiVersion/plural/kind
-        // + namespaced.
         model: {
           apiGroup: 'devportal.kuadrant.io',
           apiVersion: 'v1alpha1',
@@ -161,6 +192,7 @@ const CreateAPIKeyModal: React.FC<Props> = ({
           spec: {
             apiProductRef: { name: productName },
             planTier: plan,
+            secretRef: { name: secretName },
             requestedBy: { userId, email },
             useCase: useCase || `Created via Console — ${userId}`,
           },
