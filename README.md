@@ -72,8 +72,13 @@ See [SPECIFICATION.md](SPECIFICATION.md) for the full requirements
 custom-rhcl-console/
 ├── SPECIFICATION.md          # Authoritative spec — all PRs cite FR/NFR
 ├── README.md                 # This file
-├── helm/custom-rhcl-console/ # Helm chart (Artifact Hub / GitOps)
-├── .github/workflows/        # Quay build + Helm chart-releaser
+├── docs/                     # GitHub Pages site + Helm / Artifact Hub repo
+│   ├── index.html            # PatternFly + RHDS landing
+│   ├── index.yaml            # Helm repository index
+│   ├── artifacthub-repo.yml  # Artifact Hub ownership
+│   └── images/               # Screenshots
+├── helm/custom-rhcl-console/ # Helm chart source
+├── .github/workflows/        # Quay build + docs/ Helm publish
 ├── examples/gitops/          # Argo CD Application + helmApps snippet
 ├── dns-prober/               # Optional Quarkus DNS/TLS probe companion
 └── console-plugin/           # OpenShift Console dynamic plugin (React/TS)
@@ -160,6 +165,18 @@ CI builds and pushes both the plugin and dns-prober images to
 | `REDHAT_REGISTRY_PASSWORD` | Red Hat registry password / token |
 
 ## Helm chart (recommended)
+
+Landing + Helm repo (GitHub Pages `/docs`):
+https://maximilianoPizarro.github.io/custom-rhcl-console/
+
+```bash
+helm repo add custom-rhcl-console https://maximilianoPizarro.github.io/custom-rhcl-console/
+helm repo update
+helm install custom-rhcl-console custom-rhcl-console/custom-rhcl-console \
+  -n custom-rhcl-console --create-namespace
+```
+
+Or from this repository:
 
 ```bash
 helm upgrade --install custom-rhcl-console ./helm/custom-rhcl-console \

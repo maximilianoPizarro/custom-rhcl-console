@@ -3,5 +3,5 @@
 set -euo pipefail
 # shellcheck source=scripts/lib/common.sh
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/common.sh"
-# GitHub Pages URL for this repository's Helm chart index.
+# GitHub Pages serves /docs on main — this is the Helm / Artifact Hub URL.
 export HELM_REPO_URL="${HELM_REPO_URL:-https://maximilianoPizarro.github.io/custom-rhcl-console}"

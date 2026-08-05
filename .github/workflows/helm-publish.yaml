@@ -5,6 +5,11 @@ on:
     branches: [main]
     tags:
       - "v*"
+    paths:
+      - "helm/**"
+      - "docs/index.html"
+      - "docs/artifacthub-repo.yml"
+      - ".github/workflows/helm-publish.yaml"
   workflow_dispatch:
 
 permissions:
@@ -35,15 +40,19 @@ jobs:
           grep -q 'kind: ConsolePlugin' /tmp/rendered.yaml
           grep -q 'kind: Deployment' /tmp/rendered.yaml
 
-  release:
+  publish-docs:
     needs: lint
-    if: github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags/v') || (github.event_name == 'push' && github.ref == 'refs/heads/main')
+    if: >
+      (github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags/v') ||
+      (github.event_name == 'push' && github.ref == 'refs/heads/main')) &&
+      !contains(github.event.head_commit.message, 'chore: publish Helm chart')
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Configure Git
         run: |
@@ -55,28 +64,36 @@ jobs:
         with:
           version: v3.17.3
 
-      - name: Ensure gh-pages branch exists
+      - name: Resolve chart version
+        id: version
         run: |
-          if git ls-remote --exit-code --heads origin gh-pages >/dev/null 2>&1; then
-            echo "origin/gh-pages already exists"
+          source scripts/lib/version.sh
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Package chart into docs/
+        env:
+          HELM_REPO_URL: https://maximilianoPizarro.github.io/custom-rhcl-console
+        run: |
+          mkdir -p docs
+          helm package helm/custom-rhcl-console --destination docs/
+          if [ -f docs/index.yaml ]; then
+            helm repo index docs/ --url "${HELM_REPO_URL}" --merge docs/index.yaml
+          else
+            helm repo index docs/ --url "${HELM_REPO_URL}"
+          fi
+          test -f "docs/custom-rhcl-console-${{ steps.version.outputs.version }}.tgz"
+          test -f docs/index.yaml
+          test -f docs/artifacthub-repo.yml
+          test -f docs/index.html
+
+      - name: Commit and push docs/ Helm repo
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          git add docs/*.tgz docs/index.yaml docs/artifacthub-repo.yml docs/index.html
+          if git diff --staged --quiet; then
+            echo "No Helm/docs changes to publish."
             exit 0
           fi
-          echo "Creating orphan gh-pages branch for Helm chart index"
-          git checkout --orphan gh-pages
-          git rm -rf . >/dev/null 2>&1 || true
-          printf 'apiVersion: v1\nentries: {}\ngenerated: "%s"\n' \
-            "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > index.yaml
-          echo "custom-rhcl-console Helm repository" > README.md
-          git add index.yaml README.md
-          git commit -m "chore: bootstrap gh-pages for Helm chart index"
-          git push origin gh-pages
-          git checkout main
-
-      - name: Run chart-releaser
-        uses: helm/chart-releaser-action@v1.7.0
-        with:
-          charts_dir: helm
-          config: .github/cr.yaml
-          skip_existing: true
-        env:
-          CR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          git commit -m "chore: publish Helm chart v${VERSION} to docs/"
+          git push origin "HEAD:${GITHUB_REF_NAME}"

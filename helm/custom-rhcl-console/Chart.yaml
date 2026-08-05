@@ -4,7 +4,7 @@ description: OpenShift Console dynamic plugin for Red Hat Connectivity Link (Kua
 type: application
 version: 0.1.1
 appVersion: "1.3.0"
-home: https://github.com/maximilianoPizarro/custom-rhcl-console
+home: https://maximilianoPizarro.github.io/custom-rhcl-console/
 sources:
   - https://github.com/maximilianoPizarro/custom-rhcl-console
 maintainers:
@@ -16,11 +16,17 @@ annotations:
   artifacthub.io/category: monitoring
   artifacthub.io/links: |
     - name: Documentation
+      url: https://maximilianoPizarro.github.io/custom-rhcl-console/
+    - name: Source
       url: https://github.com/maximilianoPizarro/custom-rhcl-console
     - name: Red Hat Connectivity Link
       url: https://docs.redhat.com/en/documentation/red_hat_connectivity_link
     - name: Kuadrant
       url: https://docs.kuadrant.io/
+    - name: PatternFly
+      url: https://www.patternfly.org/
+    - name: Red Hat UX
+      url: https://ux.redhat.com/
   artifacthub.io/images: |
     - name: plugin
       image: quay.io/maximilianopizarro/custom-rhcl-console:v0.1.1

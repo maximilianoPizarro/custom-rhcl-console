@@ -26,6 +26,9 @@ helm upgrade --install custom-rhcl-console ./helm/custom-rhcl-console \
 
 > **Namespace:** install into `custom-rhcl-console`. The plugin hardcodes ConfigMap lookups to that namespace.
 
+Landing page & Helm index (GitHub Pages `/docs`):
+https://maximilianoPizarro.github.io/custom-rhcl-console/
+
 ### With custom runtime config
 
 ```bash

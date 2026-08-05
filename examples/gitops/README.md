@@ -69,7 +69,7 @@ Add the following under `helmApps:` in
 
 ## Artifact Hub / Helm repo
 
-Once GitHub Pages + chart-releaser publish the index:
+GitHub Pages serves `/docs` on `main` (landing + Helm index):
 
 ```bash
 helm repo add custom-rhcl-console https://maximilianoPizarro.github.io/custom-rhcl-console/
@@ -77,4 +77,5 @@ helm install custom-rhcl-console custom-rhcl-console/custom-rhcl-console \
   -n custom-rhcl-console --create-namespace
 ```
 
-Register the same URL on [Artifact Hub](https://artifacthub.io) as an OCI/HTTP Helm repository owned by the maintainers listed in `artifacthub-repo.yml`.
+Register the same URL on [Artifact Hub](https://artifacthub.io) as a Helm repository.
+Ownership metadata lives in [`docs/artifacthub-repo.yml`](../../docs/artifacthub-repo.yml).
