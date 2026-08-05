@@ -2,7 +2,7 @@ apiVersion: v2
 name: custom-rhcl-console
 description: OpenShift Console dynamic plugin for Red Hat Connectivity Link (Kuadrant)
 type: application
-version: 0.1.0
+version: 0.1.1
 appVersion: "1.3.0"
 home: https://github.com/maximilianoPizarro/custom-rhcl-console
 sources:
@@ -23,8 +23,8 @@ annotations:
       url: https://docs.kuadrant.io/
   artifacthub.io/images: |
     - name: plugin
-      image: quay.io/maximilianopizarro/custom-rhcl-console:v0.1.0
+      image: quay.io/maximilianopizarro/custom-rhcl-console:v0.1.1
       whitelisted: true
     - name: dns-prober
-      image: quay.io/maximilianopizarro/custom-rhcl-console-dns-prober:v0.1.0
+      image: quay.io/maximilianopizarro/custom-rhcl-console:dns-prober-v0.1.1
       whitelisted: true

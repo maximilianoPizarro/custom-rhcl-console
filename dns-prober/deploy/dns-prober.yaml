@@ -30,7 +30,7 @@ spec:
       serviceAccountName: dns-prober
       containers:
         - name: dns-prober
-          image: quay.io/maximilianopizarro/custom-rhcl-console-dns-prober:latest
+          image: quay.io/maximilianopizarro/custom-rhcl-console:dns-prober-latest
           imagePullPolicy: Always
           ports:
             - containerPort: 8080

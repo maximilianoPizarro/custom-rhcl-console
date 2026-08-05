@@ -18,6 +18,8 @@ on:
 env:
   QUAY_REGISTRY: quay.io
   QUAY_NAMESPACE: maximilianopizarro
+  # Single Quay repository; dns-prober uses dns-prober-* tags (avoids creating a second repo).
+  IMAGE_NAME: custom-rhcl-console
 
 jobs:
   build-and-push:
@@ -27,12 +29,16 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - image: custom-rhcl-console
+          - component: plugin
             context: ./console-plugin
             dockerfile: ./console-plugin/Dockerfile
-          - image: custom-rhcl-console-dns-prober
+            tag_latest: latest
+            tag_version_suffix: ""
+          - component: dns-prober
             context: ./dns-prober
             dockerfile: ./dns-prober/Dockerfile
+            tag_latest: dns-prober-latest
+            tag_version_suffix: "dns-prober-"
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -42,6 +48,13 @@ jobs:
           source scripts/lib/version.sh
           echo "APP_VERSION=$VERSION" >> "$GITHUB_ENV"
           echo "VERSION_TAG=$VERSION_V" >> "$GITHUB_ENV"
+          if [ -n "${{ matrix.tag_version_suffix }}" ]; then
+            echo "COMPONENT_VERSION_TAG=${{ matrix.tag_version_suffix }}${VERSION_V}" >> "$GITHUB_ENV"
+            echo "COMPONENT_SHA_TAG=${{ matrix.tag_version_suffix }}${GITHUB_SHA}" >> "$GITHUB_ENV"
+          else
+            echo "COMPONENT_VERSION_TAG=${VERSION_V}" >> "$GITHUB_ENV"
+            echo "COMPONENT_SHA_TAG=${GITHUB_SHA}" >> "$GITHUB_ENV"
+          fi
 
       - name: Login to Quay.io
         if: github.event_name != 'pull_request'
@@ -68,7 +81,7 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Build ${{ matrix.image }}
+      - name: Build ${{ matrix.component }}
         if: github.event_name == 'pull_request'
         uses: docker/build-push-action@v6
         with:
@@ -76,21 +89,21 @@ jobs:
           file: ${{ matrix.dockerfile }}
           push: false
           load: true
-          cache-from: type=gha,scope=${{ matrix.image }}
-          cache-to: type=gha,mode=max,scope=${{ matrix.image }}
+          cache-from: type=gha,scope=${{ matrix.component }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.component }}
           tags: |
-            ${{ env.QUAY_REGISTRY }}/${{ env.QUAY_NAMESPACE }}/${{ matrix.image }}:pr-${{ github.event.pull_request.number }}
+            ${{ env.QUAY_REGISTRY }}/${{ env.QUAY_NAMESPACE }}/${{ env.IMAGE_NAME }}:pr-${{ matrix.component }}-${{ github.event.pull_request.number }}
 
-      - name: Build and push ${{ matrix.image }}
+      - name: Build and push ${{ matrix.component }}
         if: github.event_name != 'pull_request'
         uses: docker/build-push-action@v6
         with:
           context: ${{ matrix.context }}
           file: ${{ matrix.dockerfile }}
           push: true
-          cache-from: type=gha,scope=${{ matrix.image }}
-          cache-to: type=gha,mode=max,scope=${{ matrix.image }}
+          cache-from: type=gha,scope=${{ matrix.component }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.component }}
           tags: |
-            ${{ env.QUAY_REGISTRY }}/${{ env.QUAY_NAMESPACE }}/${{ matrix.image }}:latest
-            ${{ env.QUAY_REGISTRY }}/${{ env.QUAY_NAMESPACE }}/${{ matrix.image }}:${{ env.VERSION_TAG }}
-            ${{ env.QUAY_REGISTRY }}/${{ env.QUAY_NAMESPACE }}/${{ matrix.image }}:${{ github.sha }}
+            ${{ env.QUAY_REGISTRY }}/${{ env.QUAY_NAMESPACE }}/${{ env.IMAGE_NAME }}:${{ matrix.tag_latest }}
+            ${{ env.QUAY_REGISTRY }}/${{ env.QUAY_NAMESPACE }}/${{ env.IMAGE_NAME }}:${{ env.COMPONENT_VERSION_TAG }}
+            ${{ env.QUAY_REGISTRY }}/${{ env.QUAY_NAMESPACE }}/${{ env.IMAGE_NAME }}:${{ env.COMPONENT_SHA_TAG }}

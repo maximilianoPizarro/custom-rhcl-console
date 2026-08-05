@@ -62,7 +62,8 @@ helm upgrade --install custom-rhcl-console ./helm/custom-rhcl-console \
 | `config.developerPortalUrl` | `""` | External Developer Portal URL (sidebar item) |
 | `config.developerHubUrl` | `""` | Internal Developer Hub / RHDH URL |
 | `dnsProber.enabled` | `true` | Deploy dns-prober companion |
-| `dnsProber.image.repository` | `quay.io/maximilianopizarro/custom-rhcl-console-dns-prober` | dns-prober image |
+| `dnsProber.image.repository` | `quay.io/maximilianopizarro/custom-rhcl-console` | Same Quay repo as the plugin |
+| `dnsProber.image.tag` | `dns-prober-v0.1.0` | dns-prober image tag |
 | `dnsProber.route.enabled` | `true` | Create OpenShift Route for dns-prober |
 | `route.enabled` | `false` | Route for the plugin Service (usually not needed) |
 
@@ -70,8 +71,8 @@ helm upgrade --install custom-rhcl-console ./helm/custom-rhcl-console \
 
 | Image | Description |
 |-------|-------------|
-| `quay.io/maximilianopizarro/custom-rhcl-console` | Plugin nginx (UBI9 nginx-124) |
-| `quay.io/maximilianopizarro/custom-rhcl-console-dns-prober` | Quarkus dns-prober (UBI9 OpenJDK 21) |
+| `quay.io/maximilianopizarro/custom-rhcl-console:v0.1.0` | Plugin nginx (UBI9 nginx-124) |
+| `quay.io/maximilianopizarro/custom-rhcl-console:dns-prober-v0.1.0` | Quarkus dns-prober (UBI9 OpenJDK 21) |
 
 ## GitOps
 

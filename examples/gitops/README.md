@@ -40,8 +40,8 @@ Add the following under `helmApps:` in
     dnsProber:
       enabled: true
       image:
-        repository: quay.io/maximilianopizarro/custom-rhcl-console-dns-prober
-        tag: latest
+        repository: quay.io/maximilianopizarro/custom-rhcl-console
+        tag: dns-prober-latest
         pullPolicy: Always
     config:
       grafanaNamespace: observability

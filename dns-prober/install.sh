@@ -13,14 +13,14 @@
 #
 # Overrides:
 #   IMAGE=<repo>       — override the target image; defaults to
-#                        quay.io/maximilianopizarro/custom-rhcl-console-dns-prober:latest
+#                        quay.io/maximilianopizarro/custom-rhcl-console:dns-prober-latest
 #   SKIP_BUILD=1       — reuse whatever the image tag currently points at
 #   SKIP_CONFIGMAP=1   — apply/patch nothing on the ConfigMap (useful
 #                        when the operator manages that CM by hand)
 
 set -euo pipefail
 
-IMAGE="${IMAGE:-quay.io/maximilianopizarro/custom-rhcl-console-dns-prober:latest}"
+IMAGE="${IMAGE:-quay.io/maximilianopizarro/custom-rhcl-console:dns-prober-latest}"
 NAMESPACE="${NAMESPACE:-custom-rhcl-console}"
 CONFIGMAP="${CONFIGMAP:-custom-rhcl-console-config}"
 CONFIGMAP_NAMESPACE="${CONFIGMAP_NAMESPACE:-custom-rhcl-console}"
