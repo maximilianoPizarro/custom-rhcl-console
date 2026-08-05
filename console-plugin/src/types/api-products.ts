@@ -163,6 +163,12 @@ export function getAPIKeyPhase(key: APIKey): 'Pending' | 'Approved' | 'Rejected'
     if (c.type === 'Approved' || c.type === 'Pending') return c.type;
     if (c.type === 'Rejected' || c.type === 'Denied') return 'Rejected';
   }
+  // The devportal controller sets type=Failed when the AuthPolicy uses
+  // API key auth (no OIDC). Fall back to a console-managed label so
+  // operators can still approve/reject from the UI.
+  const label = key.metadata?.labels?.['devportal.kuadrant.io/phase'];
+  if (label === 'Approved') return 'Approved';
+  if (label === 'Rejected') return 'Rejected';
   return 'Pending';
 }
 

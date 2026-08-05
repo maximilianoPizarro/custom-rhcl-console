@@ -127,119 +127,37 @@ const APIKeysListPage: React.FC = () => {
     [keys],
   );
 
-  // ---------- Approval workflow (Kuadrant 1.3 — direct CR mutation) -----
+  // ---------- Approval workflow -----
   //
-  // The 1.4+ APIKeyRequest/APIKeyApproval CRDs aren't shipped in 1.3, so we
-  // can't take the upstream "create an Approval CR and let the controller
-  // reconcile" path here. Instead we drive the two state changes directly:
+  // The devportal controller owns `status` and overwrites console-driven
+  // patches. When the AuthPolicy uses API key auth (no OIDC), the
+  // controller sets `type: Failed / AuthSchemeNotFound` and never
+  // transitions to Approved on its own.
   //
-  //   1. Approve  → mint an api_key value, create the authorino-managed
-  //                 Secret (same shape the devportal backend would create),
-  //                 then PATCH the APIKey status subresource so the UI
-  //                 reflects the new phase.
-  //   2. Reject   → PATCH the APIKey status subresource only.
-  //
-  // The status patch goes through consoleFetch because the SDK helper for
-  // status subresource patching has been flaky across SDK versions; raw
-  // fetch with `Content-Type: application/merge-patch+json` is portable.
+  // Workaround: label the APIKey with `devportal.kuadrant.io/phase` —
+  // `getAPIKeyPhase` reads this label as a fallback when the controller
+  // hasn't set a recognised condition. Labels survive controller
+  // reconciliation because the controller only touches `status`.
 
-  function generateApiKey(): string {
-    const bytes = new Uint8Array(24);
-    crypto.getRandomValues(bytes);
-    const alpha = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-    let out = 'bk_live_';
-    bytes.forEach((b) => { out += alpha[b % alpha.length]; });
-    return out;
-  }
-
-  async function createApiKeySecret(key: APIKey) {
-    const ns = key.metadata?.namespace || '';
-    const apiName = key.spec.apiProductRef?.name || 'api';
-    const userId = key.spec.requestedBy?.userId || 'unknown';
-    // Stable enough to survive re-runs without colliding — re-clicking
-    // approve recreates with the same name and the API returns 409,
-    // which we silently treat as "already approved".
-    const secretName = `apikey-${apiName}-${userId}-${key.metadata?.uid?.slice(0, 8) || 'manual'}`;
-    const body = {
-      apiVersion: 'v1',
-      kind: 'Secret',
-      metadata: {
-        name: secretName,
-        namespace: ns,
-        labels: {
-          app: 'banking-api-apikey',
-          'authorino.kuadrant.io/managed-by': 'authorino',
-          'app.kubernetes.io/managed-by': 'custom-rhcl-console',
-        },
-        annotations: {
-          'secret.kuadrant.io/plan-id': key.spec.planTier || 'bronze',
-          'secret.kuadrant.io/user-id': userId,
-          'devportal.kuadrant.io/source': 'custom-rhcl-console',
-        },
-      },
-      type: 'Opaque',
-      stringData: { api_key: generateApiKey() },
-    };
-    // `consoleFetch` rejects on non-2xx, so we have to catch the AlreadyExists
-    // case explicitly (otherwise a re-click of Approve surfaces a scary error
-    // alert even though the Secret is exactly the state we wanted — and worse,
-    // throwing here means we never reach `patchAPIKeyStatus`, so any APIKey
-    // that was approved by an older buggy build of this plugin stays Pending
-    // forever).
-    //
-    // Match permissively: the k8s API returns the human-readable
-    // "secrets \"foo\" already exists" message, but some SDK versions also
-    // expose a numeric `.code` on the rejected error.
-    try {
-      await consoleFetch(
-        `/api/kubernetes/api/v1/namespaces/${ns}/secrets`,
-        { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) },
-      );
-    } catch (e) {
-      const msg = (e instanceof Error ? e.message : String(e)).toLowerCase();
-      const code = (e as { code?: unknown }).code;
-      if (
-        code === 409 ||
-        msg.includes('409') ||
-        msg.includes('already exists') ||
-        msg.includes('alreadyexists')
-      ) {
-        return; // already approved, idempotent — fall through to status patch
-      }
-      throw e;
-    }
-  }
-
-  async function patchAPIKeyStatus(key: APIKey, action: 'Approved' | 'Rejected') {
+  async function labelAPIKey(key: APIKey, phase: 'Approved' | 'Rejected') {
     const ns = key.metadata?.namespace || '';
     const name = key.metadata?.name || '';
-    const now = new Date().toISOString();
-    // `getAPIKeyPhase` reads `type === 'Approved' | 'Rejected'` with
-    // `status === 'True'` — so we have to write the condition with the
-    // *action* as the type, not 'Ready'. The previous shape (`type: 'Ready'`
-    // + `reason: 'Approved'`) was silently ignored and the row stayed
-    // Pending in the UI even though the cluster had accepted the patch.
-    const status = {
-      phase: action,
-      conditions: [
-        {
-          type: action,
-          status: 'True',
-          reason: action,
-          message:
-            action === 'Approved'
-              ? `Approved by ${reviewer} via custom-rhcl-console`
-              : `Rejected by ${reviewer} via custom-rhcl-console`,
-          lastTransitionTime: now,
-        },
-      ],
-    };
     await consoleFetch(
-      `/api/kubernetes/apis/${APIKeyGVK.group}/${APIKeyGVK.version}/namespaces/${ns}/apikeys/${name}/status`,
+      `/api/kubernetes/apis/${APIKeyGVK.group}/${APIKeyGVK.version}/namespaces/${ns}/apikeys/${name}`,
       {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/merge-patch+json' },
-        body: JSON.stringify({ status }),
+        body: JSON.stringify({
+          metadata: {
+            labels: {
+              'devportal.kuadrant.io/phase': phase,
+            },
+            annotations: {
+              'devportal.kuadrant.io/reviewed-by': reviewer,
+              'devportal.kuadrant.io/reviewed-at': new Date().toISOString(),
+            },
+          },
+        }),
       },
     );
   }
@@ -248,21 +166,12 @@ const APIKeysListPage: React.FC = () => {
     const keyId = `${key.metadata?.namespace || ''}/${key.metadata?.name || ''}`;
     setPendingActions((prev) => ({ ...prev, [keyId]: true }));
     try {
-      if (action === 'Approved') {
-        await createApiKeySecret(key);
-      }
-      await patchAPIKeyStatus(key, action);
+      await labelAPIKey(key, action);
     } catch (e) {
-      // Make failure visible — the row stays Pending and the console gets
-      // the error. A toast layer would be nicer; keeping the surface area
-      // minimal until we have a shared notification primitive.
       // eslint-disable-next-line no-console
       console.error(`Failed to ${action.toLowerCase()} ${key.metadata?.name}:`, e);
       alert(`Failed to ${action.toLowerCase()}: ${e instanceof Error ? e.message : String(e)}`);
     } finally {
-      // Clear the spinner. The k8sWatch will re-render with the new phase
-      // (Approved/Rejected) shortly after and the row's buttons disappear
-      // because `isPending` flips false.
       setPendingActions((prev) => {
         const next = { ...prev };
         delete next[keyId];
