@@ -19,8 +19,8 @@ import {
 } from '@patternfly/react-core';
 import {
   useK8sWatchResource,
-  k8sCreate,
   K8sResourceCommon,
+  consoleFetch,
 } from '@openshift-console/dynamic-plugin-sdk';
 import { APIProductGVK } from '../../models';
 
@@ -142,70 +142,60 @@ const CreateAPIKeyModal: React.FC<Props> = ({
     const secretName = `${name}-secret`;
     const apiKeyValue = `${name}-${crypto.randomUUID().slice(0, 8)}`;
     try {
-      try {
-        await k8sCreate<K8sResourceCommon>({
-          model: {
-            apiGroup: '',
-            apiVersion: 'v1',
-            kind: 'Secret',
-            plural: 'secrets',
-            abbr: 'S',
-            label: 'Secret',
-            labelPlural: 'Secrets',
-            namespaced: true,
+      // Create the Secret that holds the API key value.
+      // Uses consoleFetch directly — k8sCreate relies on the Console's
+      // internal model registry which doesn't always resolve CRDs from
+      // dynamic plugins, returning a misleading 404.
+      const secretBody = JSON.stringify({
+        apiVersion: 'v1',
+        kind: 'Secret',
+        metadata: {
+          name: secretName,
+          namespace: ns,
+          labels: {
+            app: productName,
+            'app.kubernetes.io/managed-by': 'kuadrant-console',
+            'kuadrant.io/apikey': 'true',
+            'authorino.kuadrant.io/managed-by': 'authorino',
           },
-          data: {
-            apiVersion: 'v1',
-            kind: 'Secret',
-            metadata: {
-              name: secretName,
-              namespace: ns,
-              labels: {
-                app: productName,
-                'app.kubernetes.io/managed-by': 'kuadrant-console',
-                'kuadrant.io/apikey': 'true',
-                'authorino.kuadrant.io/managed-by': 'authorino',
-              },
-              annotations: {
-                'secret.kuadrant.io/plan-id': plan,
-              },
-            },
-            type: 'Opaque',
-            stringData: {
-              api_key: apiKeyValue,
-            },
-          } as unknown as K8sResourceCommon,
-        });
+          annotations: { 'secret.kuadrant.io/plan-id': plan },
+        },
+        type: 'Opaque',
+        stringData: { api_key: apiKeyValue },
+      });
+      try {
+        await consoleFetch(
+          `/api/kubernetes/api/v1/namespaces/${ns}/secrets`,
+          { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: secretBody },
+        );
       } catch (secretErr) {
         const msg = secretErr instanceof Error ? secretErr.message : String(secretErr);
-        if (!msg.includes('already exists') && !msg.includes('AlreadyExists')) {
+        if (!msg.includes('already exists') && !msg.includes('AlreadyExists') && !msg.includes('409')) {
           throw secretErr;
         }
       }
-      await k8sCreate<K8sResourceCommon & { spec: unknown }>({
-        model: {
-          apiGroup: 'devportal.kuadrant.io',
-          apiVersion: 'v1alpha1',
-          kind: 'APIKey',
-          plural: 'apikeys',
-          abbr: 'AK',
-          label: 'APIKey',
-          labelPlural: 'APIKeys',
-          namespaced: true,
-        },
-        data: {
-          apiVersion: 'devportal.kuadrant.io/v1alpha1',
-          kind: 'APIKey',
-          metadata: { name, namespace: ns },
-          spec: {
-            apiProductRef: { name: productName },
-            planTier: plan,
-            secretRef: { name: secretName },
-            requestedBy: { userId, email },
-            useCase: useCase || `Created via Console — ${userId}`,
-          },
+
+      // Create the APIKey CR.
+      const apiKeyBody = JSON.stringify({
+        apiVersion: 'devportal.kuadrant.io/v1alpha1',
+        kind: 'APIKey',
+        metadata: { name, namespace: ns },
+        spec: {
+          apiProductRef: { name: productName },
+          planTier: plan,
+          secretRef: { name: secretName },
+          requestedBy: { userId, email },
+          useCase: useCase || `Created via Console — ${userId}`,
         },
       });
+      const resp = await consoleFetch(
+        `/api/kubernetes/apis/devportal.kuadrant.io/v1alpha1/namespaces/${ns}/apikeys`,
+        { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: apiKeyBody },
+      );
+      if (!resp.ok) {
+        const body = await resp.json().catch(() => ({}));
+        throw new Error(body.message || `${resp.status} ${resp.statusText}`);
+      }
       onClose();
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
