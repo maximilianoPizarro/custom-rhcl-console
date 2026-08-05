@@ -9,15 +9,13 @@ import {
 
 // Gateway-wide PromQL. `reporter="source"` keeps us on the gateway-side
 // metrics only (otherwise we'd double-count each request via the
-// sidecar). When a namespace filter is set, we append a
-// `destination_workload_namespace="X"` selector — this scopes the RPS /
-// success / error / p95 rollups to requests hitting workloads in that
-// namespace, which is what "Overview scoped to namespace X" should mean.
-// Instant queries: 5-minute rate windows compared to the equivalent
-// window 1 hour ago. That delta is what drives the up/down trend arrow.
+// sidecar). When a namespace filter is set, we scope by `namespace`
+// (the pod namespace where the metric is scraped — i.e. the gateway's
+// namespace) rather than `destination_workload_namespace`, because the
+// gateway and its backends can live in different namespaces.
 function baseSelector(ns: string | null | undefined, extra = ''): string {
   const parts = ['reporter="source"'];
-  if (ns) parts.push(`destination_workload_namespace="${ns}"`);
+  if (ns) parts.push(`namespace="${ns}"`);
   if (extra) parts.push(extra);
   return `{${parts.join(',')}}`;
 }
