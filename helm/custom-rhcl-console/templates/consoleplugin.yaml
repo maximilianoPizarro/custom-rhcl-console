@@ -17,7 +17,7 @@ spec:
   {{- if .Values.dnsProber.enabled }}
   proxy:
     - alias: dns-prober
-      authorize: true
+      authorization: UserToken
       endpoint:
         type: Service
         service:
